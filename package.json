@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "dev:custom": "node server.js",
-    "build": "prisma generate --schema=./prisma/schema.minimal.prisma && next build",
+    "build": "prisma generate --schema=./prisma/schema.simple.prisma && next build",
     "start": "next start",
     "lint": "next lint",
     "db:seed": "tsx prisma/seed.ts",

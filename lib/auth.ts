@@ -35,11 +35,7 @@ export const authOptions: NextAuthOptions = {
             email: true,
             name: true,
             password: true,
-            avatar: true,
-            role: true,
-            level: true,
-            xp: true,
-            isBanned: true
+            role: true
           }
         })
 
@@ -47,9 +43,7 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Usuário não encontrado")
         }
 
-        if (user.isBanned) {
-          throw new Error("Usuário banido do sistema")
-        }
+        // Verificação de ban removida para schema simples
 
         // Verificar se o usuário tem senha
         if (!user.password) {
@@ -63,11 +57,7 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Senha inválida")
         }
 
-        // Atualizar último login
-        await prisma.user.update({
-          where: { id: user.id },
-          data: { lastLoginAt: new Date() }
-        })
+        // Atualização de último login removida para schema simples
 
         // Log do login (removido para schema minimalista)
         console.log('User login:', user.email);
@@ -76,10 +66,8 @@ export const authOptions: NextAuthOptions = {
           id: user.id,
           email: user.email,
           name: user.name,
-          image: user.avatar,
-          role: user.role as any,
-          level: user.level,
-          xp: user.xp,
+          image: null,
+          role: user.role as any
         }
       }
     }),
@@ -125,18 +113,13 @@ export const authOptions: NextAuthOptions = {
     async signIn({ user, account, profile }) {
       if (account?.provider === "google" || account?.provider === "github") {
         try {
-          const existingUser = await prisma.user.findUnique({
-            where: { email: user.email! },
-            select: {
-              id: true,
-              email: true,
-              isBanned: true
-            }
-          })
-
-          if (existingUser?.isBanned) {
-            return false
+                  const existingUser = await prisma.user.findUnique({
+          where: { email: user.email! },
+          select: {
+            id: true,
+            email: true
           }
+        })
 
           // Se o usuário não existe, será criado automaticamente pelo adapter
           // Mas podemos definir valores padrão aqui
@@ -147,10 +130,7 @@ export const authOptions: NextAuthOptions = {
               create: {
                 email: user.email!,
                 name: user.name || '',
-                avatar: user.image,
-                role: 'USER',
-                level: 1,
-                xp: 0,
+                role: 'USER'
               }
             })
           }
@@ -187,10 +167,10 @@ export const authOptions: NextAuthOptions = {
 export async function hasPermission(userId: string, requiredRoles: string[]) {
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { role: true, isBanned: true }
+    select: { role: true }
   })
 
-  if (!user || user.isBanned) {
+  if (!user) {
     return false
   }
 
