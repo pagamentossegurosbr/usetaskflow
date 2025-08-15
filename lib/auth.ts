@@ -25,6 +25,9 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Email e senha são obrigatórios")
         }
 
+        console.log("=== AUTHORIZE CREDENTIALS ===")
+        console.log("Email:", credentials.email)
+
         const user = await prisma.user.findUnique({
           where: {
             email: credentials.email
@@ -43,15 +46,18 @@ export const authOptions: NextAuthOptions = {
         })
 
         if (!user) {
+          console.log("❌ Usuário não encontrado")
           throw new Error("Usuário não encontrado")
         }
 
         if (user.isBanned) {
+          console.log("❌ Usuário banido")
           throw new Error("Usuário banido do sistema")
         }
 
         // Verificar se o usuário tem senha
         if (!user.password) {
+          console.log("❌ Usuário sem senha (OAuth)")
           throw new Error("Conta criada com OAuth. Use login social.")
         }
 
@@ -59,17 +65,11 @@ export const authOptions: NextAuthOptions = {
         const isPasswordValid = await bcrypt.compare(credentials.password, user.password)
         
         if (!isPasswordValid) {
+          console.log("❌ Senha inválida")
           throw new Error("Senha inválida")
         }
 
-        // Atualizar último login
-        await prisma.user.update({
-          where: { id: user.id },
-          data: { lastLoginAt: new Date() }
-        })
-
-        // Log do login (removido para schema minimalista)
-        console.log('User login:', user.email);
+        console.log("✅ Credenciais válidas")
 
         return {
           id: user.id,
@@ -122,9 +122,140 @@ export const authOptions: NextAuthOptions = {
       return session
     },
         async signIn({ user, account, profile }) {
-      // SignIn simplificado - sempre retorna true
-      return true
-    }
+          console.log("=== CALLBACK SIGNIN ===")
+          console.log("User:", user)
+          console.log("Account:", account)
+          
+          // Se é login com credenciais
+          if (account?.type === 'credentials') {
+            console.log("Login com credenciais detectado")
+            
+            try {
+              // Buscar usuário no banco
+              const dbUser = await prisma.user.findUnique({
+                where: { email: user.email! },
+                select: {
+                  id: true,
+                  email: true,
+                  name: true,
+                  password: true,
+                  role: true,
+                  level: true,
+                  xp: true,
+                  avatar: true,
+                  isBanned: true
+                }
+              })
+              
+              if (!dbUser) {
+                console.log("❌ Usuário não encontrado no banco")
+                return false
+              }
+              
+              if (dbUser.isBanned) {
+                console.log("❌ Usuário banido")
+                return false
+              }
+              
+              // Verificar se o usuário tem senha
+              if (!dbUser.password) {
+                console.log("❌ Usuário sem senha (OAuth)")
+                return false
+              }
+              
+              // Verificar senha
+              const isValidPassword = await bcrypt.compare(user.password!, dbUser.password)
+              if (!isValidPassword) {
+                console.log("❌ Senha inválida")
+                return false
+              }
+              
+              // Atualizar último login
+              await prisma.user.update({
+                where: { id: dbUser.id },
+                data: { lastLoginAt: new Date() }
+              })
+              
+              console.log("✅ Login bem-sucedido:", dbUser.email)
+              return true
+            } catch (error) {
+              console.error("❌ Erro no callback signIn:", error)
+              return false
+            }
+          }
+          
+          // Se é OAuth (Google/GitHub)
+          if (account?.type === 'oauth') {
+            console.log("Login OAuth detectado")
+            
+            try {
+              // Verificar se usuário já existe
+              let dbUser = await prisma.user.findUnique({
+                where: { email: user.email! },
+                select: {
+                  id: true,
+                  email: true,
+                  name: true,
+                  role: true,
+                  level: true,
+                  xp: true,
+                  avatar: true,
+                  isBanned: true
+                }
+              })
+              
+              if (dbUser) {
+                console.log("✅ Usuário OAuth já existe:", dbUser.email)
+                
+                if (dbUser.isBanned) {
+                  console.log("❌ Usuário banido")
+                  return false
+                }
+                
+                // Atualizar último login
+                await prisma.user.update({
+                  where: { id: dbUser.id },
+                  data: { lastLoginAt: new Date() }
+                })
+                
+                return true
+              }
+              
+              // Criar novo usuário OAuth
+              console.log("Criando novo usuário OAuth...")
+              dbUser = await prisma.user.create({
+                data: {
+                  email: user.email!,
+                  name: user.name || 'Usuário OAuth',
+                  role: 'USER',
+                  level: 1,
+                  xp: 0,
+                  isActive: true,
+                  avatar: user.image
+                },
+                select: {
+                  id: true,
+                  email: true,
+                  name: true,
+                  role: true,
+                  level: true,
+                  xp: true,
+                  avatar: true,
+                  isBanned: true
+                }
+              })
+              
+              console.log("✅ Novo usuário OAuth criado:", dbUser.email)
+              return true
+              
+            } catch (error) {
+              console.error("❌ Erro no callback OAuth:", error)
+              return false
+            }
+          }
+          
+          return true
+        }
   },
   pages: {
     signIn: "/auth/signin",
