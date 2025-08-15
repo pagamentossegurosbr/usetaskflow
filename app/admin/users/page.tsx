@@ -54,7 +54,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Role } from "@prisma/client"
+// Enum local para compatibilidade
+enum Role {
+  USER = "USER",
+  ADMIN = "ADMIN",
+  MODERATOR = "MODERATOR",
+  OWNER = "OWNER"
+}
 import { toast } from "sonner"
 import { debug } from "@/lib/debug"
 

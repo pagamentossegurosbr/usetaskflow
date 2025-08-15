@@ -1,4 +1,10 @@
-import { Role } from "@prisma/client"
+// Enum local para compatibilidade
+enum Role {
+  USER = "USER",
+  ADMIN = "ADMIN",
+  MODERATOR = "MODERATOR",
+  OWNER = "OWNER"
+}
 import { DefaultSession } from "next-auth"
 
 declare module "next-auth" {

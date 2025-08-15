@@ -3,7 +3,13 @@
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
-import { Role } from "@prisma/client"
+// Enum local para compatibilidade
+enum Role {
+  USER = "USER",
+  ADMIN = "ADMIN",
+  MODERATOR = "MODERATOR",
+  OWNER = "OWNER"
+}
 import { 
   Users, 
   CheckSquare, 
