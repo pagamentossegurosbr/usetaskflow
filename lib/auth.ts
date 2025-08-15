@@ -60,30 +60,15 @@ export const authOptions: NextAuthOptions = {
           data: { lastLoginAt: new Date() }
         })
 
-        // Log do login (com tratamento de erro)
-        try {
-          await prisma.activityLog.create({
-            data: {
-              userId: user.id,
-              action: "user_signin",
-              details: {
-                email: user.email,
-                loginMethod: "credentials"
-              },
-              ipAddress: "unknown", // Em produção, extrair do request
-              userAgent: "unknown",
-            }
-          })
-        } catch (error) {
-          console.log('ActivityLog table not available, skipping login log');
-        }
+        // Log do login (removido para schema minimalista)
+        console.log('User login:', user.email);
 
         return {
           id: user.id,
           email: user.email,
           name: user.name,
           image: user.avatar,
-          role: user.role,
+          role: user.role as any,
           level: user.level,
           xp: user.xp,
         }
