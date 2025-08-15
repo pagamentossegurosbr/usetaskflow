@@ -1,91 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { prisma } from '@/lib/prisma';
 
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    
-    if (!session?.user?.email) {
+    if (!session?.user?.id || session.user.role !== 'OWNER') {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
-    }
-
-    // Verificar se o usuário é admin
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
-      select: { role: true }
-    });
-
-    if (user?.role !== 'OWNER' && user?.role !== 'MODERATOR') {
-      return NextResponse.json({ error: 'Acesso negado' }, { status: 403 });
     }
 
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '50');
-    const userId = searchParams.get('userId');
-    const action = searchParams.get('action');
-    const dateFrom = searchParams.get('dateFrom');
-    const dateTo = searchParams.get('dateTo');
 
-    const skip = (page - 1) * limit;
-
-    // Construir filtros
-    const where: any = {};
-    
-    if (userId) {
-      where.userId = userId;
-    }
-    
-    if (action) {
-      where.action = { contains: action, mode: 'insensitive' };
-    }
-    
-    if (dateFrom || dateTo) {
-      where.createdAt = {};
-      if (dateFrom) {
-        where.createdAt.gte = new Date(dateFrom);
-      }
-      if (dateTo) {
-        where.createdAt.lte = new Date(dateTo);
-      }
-    }
-
-    // Buscar logs com paginação
-    const [logs, total] = await Promise.all([
-      prisma.activityLog.findMany({
-        where,
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              role: true,
-            },
-          },
-        },
-        orderBy: { createdAt: 'desc' },
-        skip,
-        take: limit,
-      }),
-      prisma.activityLog.count({ where }),
-    ]);
-
-    const pages = Math.ceil(total / limit);
-
+    // Retornar array vazio (tabela logs não existe no schema ultra-minimal)
     return NextResponse.json({
-      logs,
+      logs: [],
       pagination: {
         page,
         limit,
-        total,
-        pages,
-      },
+        total: 0,
+        pages: 0,
+      }
     });
+
   } catch (error) {
-    console.error('Error fetching logs:', error);
+    console.error('Erro ao buscar logs:', error);
     return NextResponse.json(
       { error: 'Erro interno do servidor' },
       { status: 500 }

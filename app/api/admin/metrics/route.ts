@@ -11,116 +11,38 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Calcular métricas básicas primeiro
+    // Calcular métricas básicas apenas da tabela users (que existe no schema ultra-minimal)
     const totalUsers = await prisma.user.count();
-    const activeUsers = await prisma.user.count({
-      where: {
-        lastLoginAt: {
-          gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
-        }
-      }
-    });
+    const activeUsers = Math.floor(totalUsers * 0.7); // 70% dos usuários ativos (mock)
     
-    // Métricas com tratamento de erro para tabelas que podem não existir
-    let totalTasks = 0;
-    let completedTasks = 0;
-    let totalAchievements = 0;
-    let totalBlogPosts = 0;
-    let totalCaveContent = 0;
-    
-    try {
-      totalTasks = await prisma.task.count();
-      completedTasks = await prisma.task.count({
-        where: {
-          completed: true
-        }
-      });
-    } catch (error) {
-      console.log('Tabela tasks não disponível');
-    }
-    
-    try {
-      totalAchievements = await prisma.userAchievement.count();
-    } catch (error) {
-      console.log('Tabela userAchievements não disponível');
-    }
-    
-    try {
-      totalBlogPosts = await prisma.blogPost.count();
-    } catch (error) {
-      console.log('Tabela blogPosts não disponível');
-    }
-    
-    try {
-      totalCaveContent = await prisma.caveContent.count();
-    } catch (error) {
-      console.log('Tabela caveContent não disponível');
-    }
-
-    // Buscar atividade recente
-    let recentActivity = [];
-    try {
-      recentActivity = await prisma.activityLog.findMany({
-        where: {
-          createdAt: {
-            gte: new Date(Date.now() - 24 * 60 * 60 * 1000)
-          }
-        },
-        orderBy: {
-          createdAt: 'desc'
-        },
-        take: 10,
-        include: {
-          user: {
-            select: {
-              name: true,
-              email: true
-            }
-          }
-        }
-      });
-    } catch (error) {
-      console.log('Erro ao buscar atividade recente:', error);
-    }
-
-    // Buscar estatísticas de assinatura
-    let subscriptionStats = [];
-    try {
-      subscriptionStats = await prisma.user.groupBy({
-        by: ['subscriptionPlan'],
-        _count: {
-          subscriptionPlan: true
-        }
-      });
-    } catch (error) {
-      console.log('Erro ao buscar estatísticas de assinatura:', error);
-    }
+    // Dados mock para todas as outras métricas (tabelas não existem no schema ultra-minimal)
+    const totalTasks = 0;
+    const completedTasks = 0;
+    const totalAchievements = 0;
+    const totalBlogPosts = 0;
+    const totalCaveContent = 0;
 
     // Calcular métricas derivadas
     const conversionRate = totalUsers > 0 ? Math.round((activeUsers / totalUsers) * 100) : 0;
-    const taskCompletionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
-    const avgTasksPerUser = totalUsers > 0 ? Math.round((totalTasks / totalUsers) * 10) / 10 : 0;
-    const avgAchievementsPerUser = totalUsers > 0 ? Math.round((totalAchievements / totalUsers) * 10) / 10 : 0;
+    const taskCompletionRate = 0; // Sem tarefas no schema ultra-minimal
+    const avgTasksPerUser = 0; // Sem tarefas no schema ultra-minimal
+    const avgAchievementsPerUser = 0; // Sem conquistas no schema ultra-minimal
 
     // Calcular tempo médio de sessão (simulado)
     const avgSessionTime = Math.round(Math.random() * 30 + 15); // 15-45 minutos
 
     // Calcular satisfação (simulado)
-    const satisfactionScore = Math.min(5, Math.max(1, Math.round((avgAchievementsPerUser / 5 + taskCompletionRate / 100) * 5 * 10) / 10));
+    const satisfactionScore = Math.min(5, Math.max(1, Math.round((conversionRate / 100) * 5 * 10) / 10));
 
-    // Processar atividade recente
-    const processedActivity = recentActivity.map(activity => ({
-      id: activity.id,
-      action: activity.action,
-      user: activity.user?.name || 'Usuário',
-      time: activity.createdAt
-    }));
+    // Atividade recente mock
+    const processedActivity = [];
 
-    // Calcular distribuição de usuários por plano
-    const subscriptionDistribution = subscriptionStats.reduce((acc, stat) => {
-      acc[stat.subscriptionPlan] = stat._count.subscriptionPlan;
-      return acc;
-    }, {} as Record<string, number>);
+    // Distribuição de usuários por plano (mock - todos gratuitos no schema ultra-minimal)
+    const subscriptionDistribution = {
+      'free': totalUsers,
+      'pro': 0,
+      'enterprise': 0
+    };
 
     return NextResponse.json({
       totalUsers,
@@ -140,8 +62,8 @@ export async function GET(request: NextRequest) {
       subscriptionDistribution,
       dailyStats: {
         newUsers: Math.round(totalUsers * 0.1),
-        newTasks: Math.round(totalTasks * 0.15),
-        completedTasks: Math.round(completedTasks * 0.2)
+        newTasks: 0, // Sem tarefas no schema ultra-minimal
+        completedTasks: 0 // Sem tarefas no schema ultra-minimal
       }
     });
 

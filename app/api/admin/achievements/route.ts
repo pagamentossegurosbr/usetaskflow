@@ -1,90 +1,53 @@
-import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
-import { authOptions, isAdmin } from "@/lib/auth"
-import { prisma } from "@/lib/prisma"
+import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Não autorizado" }, { status: 401 })
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id || session.user.role !== 'OWNER') {
+      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
     }
 
-    if (!(await isAdmin(session.user.id))) {
-      return NextResponse.json({ error: "Acesso negado" }, { status: 403 })
-    }
+    // Retornar array vazio (tabela achievements não existe no schema ultra-minimal)
+    return NextResponse.json({
+      achievements: [],
+      pagination: {
+        page: 1,
+        limit: 20,
+        total: 0,
+        pages: 0,
+      }
+    });
 
-    const achievements = await prisma.achievement.findMany({
-      include: {
-        _count: {
-          select: {
-            userAchievements: true
-          }
-        }
-      },
-      orderBy: { createdAt: "desc" }
-    })
-
-    return NextResponse.json(achievements)
   } catch (error) {
-    console.error("Erro ao buscar conquistas:", error)
+    console.error('Erro ao buscar conquistas:', error);
     return NextResponse.json(
-      { error: "Erro interno do servidor" },
+      { error: 'Erro interno do servidor' },
       { status: 500 }
-    )
+    );
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Não autorizado" }, { status: 401 })
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id || session.user.role !== 'OWNER') {
+      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
     }
 
-    if (!(await isAdmin(session.user.id))) {
-      return NextResponse.json({ error: "Acesso negado" }, { status: 403 })
-    }
-
-    const body = await request.json()
-    const { name, description, icon, xpReward, requirement } = body
-
-    if (!name || !description || !icon || !xpReward || !requirement) {
-      return NextResponse.json(
-        { error: "Todos os campos são obrigatórios" },
-        { status: 400 }
-      )
-    }
-
-    const achievement = await prisma.achievement.create({
-      data: {
-        name,
-        description,
-        icon,
-        xpReward: parseInt(xpReward),
-        requirement,
-      }
-    })
-
-    // Log da atividade administrativa
-    await prisma.activityLog.create({
-      data: {
-        userId: session.user.id,
-        action: "admin_create_achievement",
-        details: {
-          achievementId: achievement.id,
-          name,
-        }
-      }
-    })
-
-    return NextResponse.json(achievement)
-  } catch (error) {
-    console.error("Erro ao criar conquista:", error)
+    // Retornar erro (tabela achievements não existe no schema ultra-minimal)
     return NextResponse.json(
-      { error: "Erro interno do servidor" },
+      { error: 'Funcionalidade de conquistas não disponível no schema atual' },
+      { status: 501 }
+    );
+
+  } catch (error) {
+    console.error('Erro ao criar conquista:', error);
+    return NextResponse.json(
+      { error: 'Erro interno do servidor' },
       { status: 500 }
-    )
+    );
   }
 }
 
