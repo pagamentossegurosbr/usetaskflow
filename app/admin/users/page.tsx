@@ -656,7 +656,7 @@ export default function AdminUsers() {
                   placeholder="Ex: 5"
                 />
                 <p className="text-xs text-muted-foreground">
-                  Nível atual: {actionDialog.user?.level}
+                  Nível atual: 0
                 </p>
               </div>
             )}
@@ -698,7 +698,7 @@ export default function AdminUsers() {
                   Data atual: Não informada
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  Alterações realizadas: {actionDialog.user?.dateOfBirthChangeCount || 0}/2
+                  Alterações realizadas: 0/2
                 </p>
               </div>
             )}
