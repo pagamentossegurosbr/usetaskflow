@@ -259,9 +259,7 @@ export default function AdminUsers() {
       newLevel: "",
       newName: user.name,
       newEmail: user.email,
-      newDateOfBirth: user.dateOfBirth ? 
-        new Date(user.dateOfBirth).toISOString().split('T')[0] : 
-        ""
+      newDateOfBirth: "" // Remover referência a dateOfBirth
     })
   }
 
@@ -444,14 +442,14 @@ export default function AdminUsers() {
                         {/* {getPlanBadge(user.subscriptionPlan)} */}
                         {/* {getStatusBadge(user.subscriptionStatus)} */}
                       </div>
-                      {/* <div className="flex items-center gap-2 mt-1">
-                        <Badge variant="outline" className="text-xs">
-                          Nível {user.level} • {user.xp} XP
-                        </Badge>
-                        <Badge variant="outline" className="text-xs">
-                          Max Level: {user.maxLevel}
-                        </Badge>
-                      </div> */}
+                       {/* <div className="flex items-center gap-2 mt-1">
+                         <Badge variant="outline" className="text-xs">
+                           Nível 0 • 0 XP
+                         </Badge>
+                         <Badge variant="outline" className="text-xs">
+                           Max Level: 0
+                         </Badge>
+                       </div> */}
                     </div>
                   </div>
                   
@@ -697,10 +695,7 @@ export default function AdminUsers() {
                   onChange={(e) => setActionData({ ...actionData, newDateOfBirth: e.target.value })}
                 />
                 <p className="text-xs text-muted-foreground mt-1">
-                  Data atual: {actionDialog.user?.dateOfBirth ? 
-                    new Date(actionDialog.user.dateOfBirth).toLocaleDateString('pt-BR') : 
-                    "Não informada"
-                  }
+                  Data atual: Não informada
                 </p>
                 <p className="text-xs text-muted-foreground">
                   Alterações realizadas: {actionDialog.user?.dateOfBirthChangeCount || 0}/2
@@ -804,10 +799,7 @@ export default function AdminUsers() {
                     <Label className="text-sm font-medium text-muted-foreground">Data de Nascimento</Label>
                     <div className="flex items-center gap-2">
                       <p className="font-medium">
-                        {selectedUser.dateOfBirth ? 
-                          new Date(selectedUser.dateOfBirth).toLocaleDateString('pt-BR') : 
-                          "Não informada"
-                        }
+                        Não informada
                       </p>
                       <Button
                         variant="outline"
@@ -820,25 +812,13 @@ export default function AdminUsers() {
                           });
                           setActionData({
                             ...actionData,
-                            newDateOfBirth: selectedUser.dateOfBirth ? 
-                              new Date(selectedUser.dateOfBirth).toISOString().split('T')[0] : 
-                              ""
+                            newDateOfBirth: ""
                           });
                         }}
                       >
                         <Edit className="h-3 w-3" />
                       </Button>
                     </div>
-                    {/* {selectedUser.dateOfBirth && (
-                      <div className="flex gap-2 mt-1">
-                        <Badge variant="outline">
-                          {selectedUser.dateOfBirthChangeCount} alteração{selectedUser.dateOfBirthChangeCount > 1 ? 'ões' : ''}
-                        </Badge>
-                        <Badge variant={selectedUser.dateOfBirthChangeCount >= 2 ? "destructive" : "secondary"}>
-                          {selectedUser.dateOfBirthChangeCount >= 2 ? 'Sem alterações restantes' : `${2 - selectedUser.dateOfBirthChangeCount} restantes`}
-                        </Badge>
-                      </div>
-                    )} */}
                   </div>
                 </CardContent>
               </Card>
@@ -851,15 +831,15 @@ export default function AdminUsers() {
                 <CardContent className="space-y-3">
                   <div>
                     <Label className="text-sm font-medium text-muted-foreground">Nível Atual</Label>
-                    <p className="text-2xl font-bold text-primary">{selectedUser.level}</p>
+                    <p className="text-2xl font-bold text-primary">0</p>
                   </div>
                   <div>
                     <Label className="text-sm font-medium text-muted-foreground">XP Total</Label>
-                    <p className="text-xl font-semibold">{selectedUser.xp.toLocaleString()}</p>
+                    <p className="text-xl font-semibold">0</p>
                   </div>
                   <div>
                     <Label className="text-sm font-medium text-muted-foreground">Nível Máximo</Label>
-                    <p className="font-medium">{selectedUser.maxLevel}</p>
+                    <p className="font-medium">0</p>
                   </div>
                   <div>
                     <Label className="text-sm font-medium text-muted-foreground">Atividade</Label>
@@ -882,7 +862,7 @@ export default function AdminUsers() {
                 <CardContent className="space-y-3">
                   <div>
                     <Label className="text-sm font-medium text-muted-foreground">Plano Atual</Label>
-                    <div className="mt-1">{getPlanBadge(selectedUser.subscriptionPlan)}</div>
+                    <div className="mt-1">{getPlanBadge("free")}</div>
                   </div>
                   {/* {selectedUser.subscriptionStatus && (
                     <div>
@@ -922,11 +902,11 @@ export default function AdminUsers() {
                 <CardContent className="space-y-3">
                   <div>
                     <Label className="text-sm font-medium text-muted-foreground">Criado em</Label>
-                    <p className="text-sm">{new Date(selectedUser.createdAt).toLocaleDateString('pt-BR')}</p>
+                    <p className="text-sm">Data não disponível</p>
                   </div>
                   <div>
                     <Label className="text-sm font-medium text-muted-foreground">Última atualização</Label>
-                    <p className="text-sm">{new Date(selectedUser.updatedAt).toLocaleDateString('pt-BR')}</p>
+                    <p className="text-sm">Data não disponível</p>
                   </div>
                   {/* {selectedUser.bannedAt && (
                     <div>
