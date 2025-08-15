@@ -81,9 +81,7 @@ export async function POST(request: NextRequest) {
         id: user.id,
         name: user.name,
         email: user.email,
-        role: user.role,
-        level: user.level,
-        xp: user.xp,
+        role: user.role
       }
     }, { status: 201 })
 

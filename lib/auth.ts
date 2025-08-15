@@ -1,5 +1,4 @@
 import { NextAuthOptions } from "next-auth"
-import { PrismaAdapter } from "@next-auth/prisma-adapter"
 import CredentialsProvider from "next-auth/providers/credentials"
 import GoogleProvider from "next-auth/providers/google"
 import GitHubProvider from "next-auth/providers/github"
@@ -13,7 +12,7 @@ enum Role {
 }
 
 export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma),
+  // Adapter removido para simplificar
   providers: [
     CredentialsProvider({
       name: "credentials",
@@ -110,37 +109,8 @@ export const authOptions: NextAuthOptions = {
       }
       return session
     },
-    async signIn({ user, account, profile }) {
-      if (account?.provider === "google" || account?.provider === "github") {
-        try {
-                  const existingUser = await prisma.user.findUnique({
-          where: { email: user.email! },
-          select: {
-            id: true,
-            email: true
-          }
-        })
-
-          // Se o usuário não existe, será criado automaticamente pelo adapter
-          // Mas podemos definir valores padrão aqui
-          if (!existingUser) {
-            await prisma.user.upsert({
-              where: { email: user.email! },
-              update: {},
-              create: {
-                email: user.email!,
-                name: user.name || '',
-                role: 'USER'
-              }
-            })
-          }
-
-          return true
-        } catch (error) {
-          console.error("Erro durante o sign-in:", error)
-          return false
-        }
-      }
+        async signIn({ user, account, profile }) {
+      // SignIn simplificado - sempre retorna true
       return true
     }
   },
