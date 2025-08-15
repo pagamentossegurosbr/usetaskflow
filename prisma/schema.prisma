@@ -1,0 +1,629 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?
+  role          Role      @default(USER)
+  level         Int       @default(1)
+  xp            Int       @default(0)
+  bio           String?
+  title         String?
+  badges        String    @default("")
+  theme         String    @default("dark")
+  hideProfileEffects Boolean @default(false) @map("hide_profile_effects")
+  isBanned      Boolean   @default(false) @map("is_banned")
+  bannedAt      DateTime? @map("banned_at")
+  bannedBy      String? @map("banned_by")
+  banReason     String? @map("ban_reason")
+  isActive      Boolean   @default(true) @map("is_active")
+  lastLoginAt   DateTime? @map("last_login_at")
+  avatar        String?
+  dateOfBirth   DateTime? @map("date_of_birth")
+  dateOfBirthChangeCount Int @default(0) @map("date_of_birth_change_count")
+  language      String    @default("pt") // pt, en, es
+  
+  // Subscription fields
+  subscriptionPlan      String    @default("free") @map("subscription_plan") // free, aspirante, executor
+  subscriptionStatus    String    @default("active") @map("subscription_status") // active, canceled, past_due, incomplete
+  stripeCustomerId      String? @map("stripe_customer_id")
+  stripeSubscriptionId  String? @map("stripe_subscription_id")
+  subscriptionStartedAt DateTime? @map("subscription_started_at")
+  subscriptionExpiresAt DateTime? @map("subscription_expires_at")
+  maxLevel              Int       @default(3) @map("max_level")
+  
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  accounts         Account[]
+  sessions         Session[]
+  tasks            Task[]
+  achievements     UserAchievement[]
+  // cooldowns        Cooldown[]
+  activityLogs     ActivityLog[]
+  // transactions     Transaction[]
+  habitTrackers    HabitTracker[]
+  readingLibrary   ReadingLibrary[]
+  pomodoroSessions PomodoroSession[]
+  // bannedUsers      User[]    @relation("BannedBy")
+  // bannedByUser     User?     @relation("BannedBy", fields: [bannedBy], references: [id])
+  
+  // CRM relations
+  leads            Lead[]
+  onboardingSteps  OnboardingStep[]
+  
+  // Blog relations
+  blogPosts        BlogPost[]
+  blogPostLikes    BlogPostLike[]
+  
+  // Pricing and Landing Page relations
+  conversions      LandingPageConversion[]
+  affiliates       Affiliate[]
+
+  @@map("users")
+}
+
+// model VerificationToken {
+//   identifier String
+//   token      String   @unique
+//   expires    DateTime
+
+//   @@unique([identifier, token])
+// }
+
+model Task {
+  id           String    @id @default(uuid())
+  title        String
+  text         String
+  completed    Boolean   @default(false)
+  priority     Boolean   @default(false)
+  userId       String    @map("user_id")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  completedAt  DateTime? @map("completed_at")
+  scheduledFor DateTime? @map("scheduled_for")
+  
+  // Campos opcionais para tarefas expandidas
+  description   String?
+  category      String?
+  deadline      DateTime?
+  estimatedTime Int?
+  tags          Json?    // Array de strings
+  reward        String?
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("tasks")
+}
+
+model Settings {
+  id    String @id @default(uuid())
+  key   String @unique
+  value Json
+  
+  @@map("settings")
+}
+
+model ActivityLog {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  action    String
+  details   Json?
+  ipAddress String?  @map("ip_address")
+  userAgent String?  @map("user_agent")
+  createdAt DateTime @default(now()) @map("created_at")
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("activity_logs")
+}
+
+model Achievement {
+  id          String   @id @default(cuid())
+  name        String
+  description String
+  icon        String
+  xpReward    Int
+  requirement Json
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  userAchievements UserAchievement[]
+
+  @@map("achievements")
+}
+
+model UserAchievement {
+  id           String      @id @default(cuid())
+  userId       String
+  achievementId String
+  unlockedAt   DateTime    @default(now()) @map("unlocked_at")
+  
+  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievement  Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, achievementId])
+  @@map("user_achievements")
+}
+
+// XP Levels Configuration
+model XPLevel {
+  id          String   @id @default(uuid())
+  level       Int      @unique
+  xpRequired  Int      @map("xp_required")
+  title       String
+  description String?
+  badge       String?
+  color       String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("xp_levels")
+}
+
+// Blog System
+model BlogPost {
+  id          String   @id @default(uuid())
+  title       String
+  slug        String   @unique
+  content     String
+  excerpt     String?
+  featuredImage String? @map("featured_image")
+  category    String?
+  tags        Json?    // Array of strings
+  authorId    String   @map("author_id")
+  status      String   @default("draft") // draft, published, archived
+  publishedAt DateTime? @map("published_at")
+  viewCount   Int      @default(0) @map("view_count")
+  seoTitle    String?  @map("seo_title")
+  seoDescription String? @map("seo_description")
+  seoKeywords String?  @map("seo_keywords")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  likes BlogPostLike[]
+  comments BlogPostComment[]
+
+  @@map("blog_posts")
+}
+
+// Blog Post Likes
+model BlogPostLike {
+  id        String   @id @default(uuid())
+  postId    String   @map("post_id")
+  userId    String   @map("user_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  post BlogPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId])
+  @@map("blog_post_likes")
+}
+
+// Blog Post Comments
+model BlogPostComment {
+  id          String   @id @default(uuid())
+  postId      String   @map("post_id")
+  content     String
+  authorName  String   @map("author_name")
+  authorEmail String   @map("author_email")
+  isApproved  Boolean  @default(false) @map("is_approved")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  post BlogPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@map("blog_post_comments")
+}
+
+// Cave Content Management
+model CaveContent {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  type        String   // article, video, playlist, music, ambient
+  category    String?
+  url         String?
+  thumbnail   String?
+  duration    Int?     // in seconds
+  isActive    Boolean  @default(true) @map("is_active")
+  order       Int      @default(0)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("cave_content")
+}
+
+// model Cooldown {
+//   id                String   @id @default(uuid())
+//   userId            String   @map("user_id")
+//   taskId            String?  @map("task_id")
+//   actionType        String   @map("action_type")
+//   lastAction        DateTime @default(now()) @map("last_action")
+//   actionCount       Int      @default(1) @map("action_count")
+//   isBlocked         Boolean  @default(false) @map("is_blocked")
+//   blockUntil        DateTime? @map("block_until")
+//   blockReason       String?  @map("block_reason")
+//   consecutiveActions Int     @default(1) @map("consecutive_actions")
+  
+//   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+//   @@map("cooldowns")
+// }
+
+// model Transaction {
+//   id                    String   @id @default(uuid())
+//   userId                String   @map("user_id")
+//   stripePaymentIntentId String?  @map("stripe_payment_intent_id")
+//   stripeInvoiceId       String?  @map("stripe_invoice_id")
+//   amount                Int
+//   currency              String   @default("brl")
+//   planType              String   @map("plan_type")
+//   status                String   @default("pending") // pending, succeeded, failed, canceled
+//   createdAt             DateTime @default(now()) @map("created_at")
+//   updatedAt             DateTime @updatedAt @map("updated_at")
+  
+//   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+//   @@map("transactions")
+// }
+
+// model PlanFeature {
+//   id           String  @id @default(uuid())
+//   planType     String  // free, aspirante, executor
+//   featureKey   String
+//   featureValue String?
+//   isEnabled    Boolean @default(true)
+//   createdAt    DateTime @default(now())
+  
+//   @@unique([planType, featureKey])
+//   @@map("plan_features")
+// }
+
+model HabitTracker {
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id")
+  name        String
+  description String?
+  frequency   String   // daily, weekly, monthly
+  targetCount Int      @default(1) @map("target_count")
+  color       String   @default("#3b82f6")
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  entries HabitEntry[]
+
+  @@map("habit_trackers")
+}
+
+model HabitEntry {
+  id            String   @id @default(uuid())
+  habitId       String   @map("habit_id")
+  date          DateTime
+  completed     Boolean  @default(false)
+  notes         String?
+  createdAt     DateTime @default(now()) @map("created_at")
+  
+  habit HabitTracker @relation(fields: [habitId], references: [id], onDelete: Cascade)
+  
+  @@unique([habitId, date])
+  @@map("habit_entries")
+}
+
+model ReadingLibrary {
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id")
+  title       String
+  author      String
+  isbn        String?
+  coverUrl    String?  @map("cover_url")
+  status      String   @default("to_read") // to_read, reading, completed
+  rating      Int?
+  notes       String?
+  startedAt   DateTime? @map("started_at")
+  completedAt DateTime? @map("completed_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("reading_library")
+}
+
+model PomodoroSession {
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id")
+  taskName    String?  @map("task_name")
+  duration    Int      @default(1500) // 25 minutes in seconds
+  completed   Boolean  @default(false)
+  startedAt   DateTime @default(now())
+  completedAt DateTime?
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("pomodoro_sessions")
+}
+
+
+
+// CRM e Sistema de Métricas
+model Lead {
+  id          String   @id @default(cuid())
+  email       String?  @unique
+  name        String?
+  phone       String?
+  source      String   // landing_page, invite_link, organic, paid
+  campaign    String?  // nome da campanha
+  status      LeadStatus @default(NEW)
+  score       Int      @default(0)
+  notes       String?
+  tags        String   @default("") // tags separadas por vírgula
+  ipAddress   String?  @map("ip_address")
+  userAgent   String?  @map("user_agent")
+  referrer    String?
+  utmSource   String?  @map("utm_source")
+  utmMedium   String?  @map("utm_medium")
+  utmCampaign String?  @map("utm_campaign")
+  utmTerm     String?  @map("utm_term")
+  utmContent  String?  @map("utm_content")
+  onboardingData Json? // dados capturados durante o onboarding
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  convertedAt DateTime? @map("converted_at")
+  userId      String?  @map("user_id") // quando converte para usuário
+  
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  activities  LeadActivity[]
+  funnelSteps FunnelStep[]
+  linkClicks  LinkClick[]
+
+  @@map("leads")
+}
+
+model LeadActivity {
+  id        String   @id @default(cuid())
+  leadId    String   @map("lead_id")
+  type      String   // page_view, form_start, form_complete, email_open, click, etc.
+  action    String   // descrição da ação
+  details   Json?    // dados adicionais
+  ipAddress String?  @map("ip_address")
+  userAgent String?  @map("user_agent")
+  createdAt DateTime @default(now()) @map("created_at")
+  
+  lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@map("lead_activities")
+}
+
+model InviteLink {
+  id          String   @id @default(cuid())
+  code        String   @unique // código único do link
+  name        String   // nome do link
+  description String?
+  type        InviteLinkType @default(GENERAL)
+  campaign    String?  // campanha associada
+  isActive    Boolean  @default(true) @map("is_active")
+  maxUses     Int?     @map("max_uses") // null = ilimitado
+  currentUses Int      @default(0) @map("current_uses")
+  expiresAt   DateTime? @map("expires_at")
+  createdBy   String   @map("created_by") // ID do admin que criou
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  
+  clicks      LinkClick[]
+
+  @@map("invite_links")
+}
+
+model LinkClick {
+  id          String   @id @default(cuid())
+  linkId      String   @map("link_id")
+  leadId      String?  @map("lead_id") // pode ser null se não identificado
+  ipAddress   String?  @map("ip_address")
+  userAgent   String?  @map("user_agent")
+  referrer    String?
+  country     String?
+  city        String?
+  device      String?  // mobile, desktop, tablet
+  browser     String?
+  os          String?
+  clickedAt   DateTime @default(now()) @map("clicked_at")
+  
+  link        InviteLink @relation(fields: [linkId], references: [id], onDelete: Cascade)
+  lead        Lead?     @relation(fields: [leadId], references: [id], onDelete: SetNull)
+
+  @@map("link_clicks")
+}
+
+model FunnelStep {
+  id          String   @id @default(cuid())
+  leadId      String   @map("lead_id")
+  stepName    String   @map("step_name") // landing_view, signup_start, signup_complete, onboarding_1, etc.
+  stepOrder   Int      @map("step_order")
+  completed   Boolean  @default(false)
+  timeSpent   Int?     @map("time_spent") // em segundos
+  data        Json?    // dados específicos do step
+  createdAt   DateTime @default(now()) @map("created_at")
+  completedAt DateTime? @map("completed_at")
+  
+  lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@map("funnel_steps")
+}
+
+model OnboardingStep {
+  id          String   @id @default(cuid())
+  userId      String   @map("user_id")
+  stepName    String   @map("step_name")
+  stepOrder   Int      @map("step_order")
+  completed   Boolean  @default(false)
+  timeSpent   Int?     @map("time_spent") // em segundos
+  data        Json?    // dados específicos do step
+  createdAt   DateTime @default(now()) @map("created_at")
+  completedAt DateTime? @map("completed_at")
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("onboarding_steps")
+}
+
+
+
+enum Role {
+  USER
+  MODERATOR
+  OWNER
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  QUALIFIED
+  CONVERTED
+  LOST
+  ARCHIVED
+}
+
+enum InviteLinkType {
+  GENERAL
+  PARTNER
+  AFFILIATE
+  REFERRAL
+  CAMPAIGN
+}
+
+// Pricing Management System
+model PricingPlan {
+  id                String   @id @default(uuid())
+  name              String
+  slug              String   @unique
+  description       String?
+  originalPrice     Float    @map("original_price")
+  promotionalPrice  Float?   @map("promotional_price")
+  stripePriceId     String?  @map("stripe_price_id")
+  stripeProductId   String?  @map("stripe_product_id")
+  isActive          Boolean  @default(true) @map("is_active")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  landingPages LandingPage[]
+
+  @@map("pricing_plans")
+}
+
+model LandingPage {
+  id              String   @id @default(uuid())
+  name            String
+  slug            String   @unique
+  template        String   @default("default")
+  title           String
+  subtitle        String?
+  description     String?
+  pricingPlanId   String?  @map("pricing_plan_id")
+  customPricing   Json?    @map("custom_pricing")
+  inviteCode      String?  @unique @map("invite_code")
+  isActive        Boolean  @default(true) @map("is_active")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  pricingPlan     PricingPlan? @relation(fields: [pricingPlanId], references: [id], onDelete: SetNull)
+  conversions     LandingPageConversion[]
+  affiliateClicks AffiliateClick[]
+
+  @@map("landing_pages")
+}
+
+model LandingPageConversion {
+  id                   String   @id @default(uuid())
+  landingPageId        String   @map("landing_page_id")
+  userId               String?  @map("user_id")
+  inviteCode           String?
+  conversionType       String   @map("conversion_type")
+  stripeCustomerId     String?  @map("stripe_customer_id")
+  stripeSubscriptionId String?  @map("stripe_subscription_id")
+  amount               Float?
+  currency             String   @default("BRL")
+  createdAt            DateTime @default(now()) @map("created_at")
+
+  landingPage LandingPage @relation(fields: [landingPageId], references: [id], onDelete: Cascade)
+  user        User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("landing_page_conversions")
+}
+
+model Affiliate {
+  id             String   @id @default(uuid())
+  userId         String   @map("user_id")
+  code           String   @unique
+  name           String
+  email          String
+  commissionRate Float    @default(10.00) @map("commission_rate")
+  totalEarnings  Float    @default(0.00) @map("total_earnings")
+  isActive       Boolean  @default(true) @map("is_active")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  user    User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  clicks  AffiliateClick[]
+
+  @@map("affiliates")
+}
+
+model AffiliateClick {
+  id            String   @id @default(uuid())
+  affiliateId   String   @map("affiliate_id")
+  landingPageId String?  @map("landing_page_id")
+  ipAddress     String?  @map("ip_address")
+  userAgent     String?  @map("user_agent")
+  referrer      String?
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  affiliate   Affiliate   @relation(fields: [affiliateId], references: [id], onDelete: Cascade)
+  landingPage LandingPage? @relation(fields: [landingPageId], references: [id], onDelete: SetNull)
+
+  @@map("affiliate_clicks")
+}

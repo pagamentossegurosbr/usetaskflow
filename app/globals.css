@@ -1,0 +1,1573 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /* Animações para o background futurista */
+  @keyframes pulse-slow {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 0.7; }
+  }
+  
+  @keyframes float-slow {
+    0%, 100% { transform: translateY(0px) rotate(0deg) scale(1); }
+    50% { transform: translateY(-15px) rotate(90deg) scale(1.05); }
+  }
+  
+  @keyframes float-slow-reverse {
+    0%, 100% { transform: translateY(0px) rotate(0deg) scale(1); }
+    50% { transform: translateY(15px) rotate(-90deg) scale(1.05); }
+  }
+  
+  @keyframes glow-slow {
+    0%, 100% { opacity: 0.3; transform: scale(1); }
+    50% { opacity: 0.6; transform: scale(1.15); }
+  }
+  
+  .animate-pulse-slow {
+    animation: pulse-slow 8s ease-in-out infinite;
+  }
+  
+  .animate-float-slow {
+    animation: float-slow 12s ease-in-out infinite;
+  }
+  
+  .animate-float-slow-reverse {
+    animation: float-slow-reverse 15s ease-in-out infinite;
+  }
+  
+  .animate-glow-slow {
+    animation: glow-slow 10s ease-in-out infinite;
+  }
+  
+  /* Efeito de Spotlight */
+  @keyframes spotlight {
+    0%, 100% { 
+      opacity: 0.15; 
+      transform: scale(1) rotate(0deg); 
+    }
+    50% { 
+      opacity: 0.25; 
+      transform: scale(1.1) rotate(180deg); 
+    }
+  }
+  
+  @keyframes spotlight-pulse {
+    0%, 100% { 
+      opacity: 0.1; 
+      transform: scale(1); 
+    }
+    50% { 
+      opacity: 0.2; 
+      transform: scale(1.05); 
+    }
+  }
+  
+  @keyframes text-glow {
+    0%, 100% { 
+      text-shadow: 0 0 20px rgba(168, 85, 247, 0.3); 
+    }
+    50% { 
+      text-shadow: 0 0 30px rgba(168, 85, 247, 0.6), 0 0 40px rgba(168, 85, 247, 0.4); 
+    }
+  }
+  
+  @keyframes button-shine {
+    0% { 
+      background-position: -200% center; 
+    }
+    100% { 
+      background-position: 200% center; 
+    }
+  }
+  
+  .animate-spotlight {
+    animation: spotlight 15s ease-in-out infinite;
+  }
+  
+  .animate-spotlight-pulse {
+    animation: spotlight-pulse 8s ease-in-out infinite;
+  }
+  
+  .animate-text-glow {
+    animation: text-glow 3s ease-in-out infinite;
+  }
+  
+  .animate-button-shine {
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+    background-size: 200% 100%;
+    animation: button-shine 2s linear infinite;
+  }
+  
+  /* Animações para cards de features */
+  @keyframes card-float {
+    0%, 100% { 
+      transform: translateY(0px); 
+    }
+    50% { 
+      transform: translateY(-5px); 
+    }
+  }
+  
+  @keyframes icon-pulse {
+    0%, 100% { 
+      opacity: 0.8; 
+      transform: scale(1); 
+    }
+    50% { 
+      opacity: 1; 
+      transform: scale(1.05); 
+    }
+  }
+  
+  @keyframes border-glow {
+    0%, 100% { 
+      border-color: rgba(255, 255, 255, 0.1); 
+    }
+    50% { 
+      border-color: rgba(168, 85, 247, 0.3); 
+    }
+  }
+  
+  .animate-card-float {
+    animation: card-float 6s ease-in-out infinite;
+  }
+  
+  .animate-icon-pulse {
+    animation: icon-pulse 3s ease-in-out infinite;
+  }
+  
+  .animate-border-glow {
+    animation: border-glow 4s ease-in-out infinite;
+  }
+  
+  /* Barra de rolagem personalizada futurista */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: rgba(147, 51, 234, 0.3);
+    border-radius: 4px;
+    transition: all 0.3s ease;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(147, 51, 234, 0.6);
+    box-shadow: 0 0 10px rgba(147, 51, 234, 0.4);
+  }
+  
+  /* Firefox scrollbar */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(147, 51, 234, 0.3) transparent;
+  }
+  :root {
+    --background: 0 0% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 0 0% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 0 0% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 0 0% 9%;
+    --secondary: 0 0% 14.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 0 0% 14.9%;
+    --muted-foreground: 0 0% 63.9%;
+    --accent: 0 0% 14.9%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 14.9%;
+    --input: 0 0% 14.9%;
+    --ring: 0 0% 83.1%;
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+    --radius: 0.5rem;
+  }
+
+  /* Calendar styles */
+  .rdp {
+    --rdp-cell-size: 40px;
+    --rdp-accent-color: hsl(var(--primary));
+    --rdp-background-color: hsl(var(--accent));
+    --rdp-accent-color-dark: hsl(var(--primary));
+    --rdp-background-color-dark: hsl(var(--accent));
+    --rdp-outline: 2px solid hsl(var(--ring));
+    --rdp-outline-selected: 2px solid hsl(var(--primary));
+    margin: 1em;
+  }
+
+  .rdp-day_selected,
+  .rdp-day_selected:focus-visible,
+  .rdp-day_selected:hover {
+    color: hsl(var(--primary-foreground));
+    opacity: 1;
+    background-color: hsl(var(--primary));
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    /* Desabilitar seleção de texto em toda a aplicação */
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+  }
+  
+  /* Permitir seleção apenas na bio */
+  .bio-selectable {
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+    user-select: text;
+  }
+}
+
+.animate-slide-in {
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.3s ease-out;
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-bounce-in {
+  animation: bounceIn 0.6s ease-out;
+}
+
+@keyframes bounceIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+  70% {
+    transform: scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Animações com efeito roxo em vez de branco */
+.animate-pulse-glow {
+  animation: pulseGlow 2s ease-in-out infinite;
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 8px rgba(147, 51, 234, 0.2);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 25px rgba(147, 51, 234, 0.4), 0 0 35px rgba(147, 51, 234, 0.2);
+    transform: scale(1.05);
+  }
+}
+
+.animate-slide-up {
+  animation: slideUp 0.4s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Efeito hover roxo para elementos da sidebar */
+.sidebar-hover-effect {
+  transition: all 0.3s ease;
+}
+
+.sidebar-hover-effect:hover {
+  box-shadow: 0 0 15px rgba(147, 51, 234, 0.3);
+  border-color: rgba(147, 51, 234, 0.4);
+}
+
+/* Efeito de linha roxa no hover */
+.sidebar-line-hover {
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.sidebar-line-hover::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: linear-gradient(90deg, rgba(147, 51, 234, 0.8), rgba(147, 51, 234, 0.4));
+  transition: width 0.3s ease;
+}
+
+.sidebar-line-hover:hover::after {
+  width: 100%;
+}
+
+.animate-gradient {
+  background-size: 200% 200%;
+  animation: gradientShift 3s ease infinite;
+}
+
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* Glassmorphism effects */
+.glass {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.glass-dark {
+  background: rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Hover effects */
+.hover-lift {
+  transition: all 0.3s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(147, 51, 234, 0.2);
+  border-radius: 2px;
+  transition: background 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(147, 51, 234, 0.4);
+}
+
+/* Scrollbar para Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(147, 51, 234, 0.2) transparent;
+}
+
+/* Line clamp utilities */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Spotlight Effect para o card de adicionar tarefa */
+.spotlight-card {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  transform-style: preserve-3d;
+  perspective: 1000px;
+}
+
+.spotlight-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(0, 0, 0, 0.1) 0%,
+    rgba(0, 0, 0, 0.05) 50%,
+    rgba(0, 0, 0, 0.1) 100%
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.spotlight-card::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(
+    circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+    rgba(0, 0, 0, 0.25) 0%,
+    rgba(0, 0, 0, 0.15) 20%,
+    rgba(0, 0, 0, 0.08) 40%,
+    transparent 60%
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  z-index: 2;
+  transform: translateZ(0);
+}
+
+.spotlight-card:hover {
+  transform: translateY(-2px) rotateX(2deg) rotateY(2deg);
+  box-shadow: 
+    0 20px 40px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(16, 185, 129, 0.2),
+    inset 0 1px 0 rgba(16, 185, 129, 0.1);
+}
+
+.spotlight-card:hover::before {
+  opacity: 1;
+}
+
+.spotlight-card:hover::after {
+  opacity: 1;
+}
+
+.spotlight-card .content {
+  position: relative;
+  z-index: 3;
+}
+
+/* Efeito de reflexo adicional */
+.spotlight-card .reflection {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    45deg,
+    transparent 30%,
+    rgba(0, 0, 0, 0.1) 50%,
+    transparent 70%
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.spotlight-card:hover .reflection {
+  opacity: 1;
+}
+
+/* Loading Screen Animations */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes glow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(16, 185, 129, 0.6), 0 0 60px rgba(16, 185, 129, 0.3);
+  }
+}
+
+@keyframes textGlow {
+  0%, 100% {
+    text-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+  }
+  50% {
+    text-shadow: 0 0 20px rgba(16, 185, 129, 0.8), 0 0 30px rgba(16, 185, 129, 0.4);
+  }
+}
+
+@keyframes particleFloat {
+  0% {
+    transform: translateY(0px) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-100px) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-glow {
+  animation: glow 2s ease-in-out infinite;
+}
+
+.animate-text-glow {
+  animation: textGlow 2s ease-in-out infinite;
+}
+
+.animate-particle-float {
+  animation: particleFloat 4s linear infinite;
+}
+
+/* Loading Screen Specific Styles */
+.loading-screen-overlay {
+  background: linear-gradient(135deg, #000000 0%, #0a0a0a 50%, #000000 100%);
+}
+
+.loading-screen-content {
+  background: radial-gradient(circle at center, rgba(16, 185, 129, 0.1) 0%, transparent 70%);
+}
+
+.loading-icon-orbit {
+  animation: spin 8s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-progress-bar {
+  background: linear-gradient(90deg, 
+    rgba(16, 185, 129, 0.2) 0%, 
+    rgba(16, 185, 129, 0.4) 50%, 
+    rgba(16, 185, 129, 0.2) 100%
+  );
+  background-size: 200% 100%;
+  animation: progressShimmer 2s ease-in-out infinite;
+}
+
+@keyframes progressShimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Animações para Partículas do Perfil - VERSÃO SUTIL */
+@keyframes particleFloat {
+  0% {
+    transform: translateY(0px) rotate(0deg);
+    opacity: 0.3;
+  }
+  50% {
+    transform: translateY(-20px) rotate(180deg);
+    opacity: 0.7;
+  }
+  100% {
+    transform: translateY(-40px) rotate(360deg);
+    opacity: 0.3;
+  }
+}
+
+.animate-particle-float {
+  animation: particleFloat 8s ease-in-out infinite;
+}
+
+/* Efeitos especiais para avatar de nível 3+ - VERSÃO SUTIL */
+@keyframes avatarGlow {
+  0%, 100% {
+    box-shadow: 
+      0 0 5px rgba(16, 185, 129, 0.1),
+      0 0 10px rgba(16, 185, 129, 0.05);
+  }
+  50% {
+    box-shadow: 
+      0 0 8px rgba(16, 185, 129, 0.15),
+      0 0 15px rgba(16, 185, 129, 0.08);
+  }
+}
+
+.avatar-level-3 {
+  animation: avatarGlow 6s ease-in-out infinite;
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes borderRotate {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-border-rotate {
+  animation: borderRotate 8s linear infinite;
+}
+
+/* Efeito de brilho interno para a imagem do avatar - VERSÃO SUTIL */
+.avatar-image-glow {
+  filter: brightness(1.02) contrast(1.01);
+  transition: all 0.3s ease;
+}
+
+.avatar-image-glow:hover {
+  filter: brightness(1.05) contrast(1.02);
+}
+
+/* Animações para o gráfico de progresso */
+@keyframes chartBarGrow {
+  from {
+    height: 0%;
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.chart-bar-animate {
+  animation: chartBarGrow 0.8s ease-out forwards;
+}
+
+/* Efeito de brilho para barras do gráfico */
+.chart-bar-glow {
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.3);
+  transition: all 0.3s ease;
+}
+
+.chart-bar-glow:hover {
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.5);
+  transform: scaleY(1.05);
+}
+
+/* Efeito de clique para avatar - VERSÃO SUTIL */
+.avatar-clickable {
+  transition: all 0.3s ease;
+}
+
+.avatar-clickable:hover {
+  transform: scale(1.02);
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.2);
+}
+
+.avatar-clickable:active {
+  transform: scale(0.99);
+}
+
+/* Efeito Spotlight para o Modal */
+.spotlight-modal {
+  position: relative;
+  overflow: hidden;
+}
+
+.spotlight-modal::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(
+    circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+    rgba(147, 51, 234, 0.1) 0%,
+    rgba(59, 130, 246, 0.05) 25%,
+    rgba(16, 185, 129, 0.03) 50%,
+    transparent 70%
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.spotlight-modal:hover::before {
+  opacity: 1;
+}
+
+/* Animação de brilho para elementos do modal */
+@keyframes modalGlow {
+  0%, 100% {
+    box-shadow: 
+      0 0 20px rgba(147, 51, 234, 0.2),
+      0 0 40px rgba(147, 51, 234, 0.1);
+  }
+  50% {
+    box-shadow: 
+      0 0 30px rgba(147, 51, 234, 0.3),
+      0 0 60px rgba(147, 51, 234, 0.15),
+      0 0 80px rgba(59, 130, 246, 0.1);
+  }
+}
+
+.spotlight-modal {
+  animation: modalGlow 4s ease-in-out infinite;
+}
+
+/* Efeito de partículas flutuantes para o modal */
+@keyframes modalParticle {
+  0% {
+    transform: translateY(0px) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-50px) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+.modal-particle {
+  animation: modalParticle 3s linear infinite;
+}
+
+/* Animação de Ping para Partículas */
+@keyframes ping {
+  75%, 100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+.animate-ping {
+  animation: ping 1s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+/* Animação de Pulse para Aura */
+@keyframes pulse {
+  50% {
+    opacity: 0.3;
+  }
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Animações específicas para níveis 4-10 - VERSÃO SUTIL */
+@keyframes level4Bounce {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+}
+
+@keyframes level5Pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.95;
+    transform: scale(1.01);
+  }
+}
+
+@keyframes level6Spin {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(1deg);
+  }
+}
+
+@keyframes level7Ping {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.02);
+    opacity: 0.9;
+  }
+}
+
+@keyframes level8Float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-1px);
+  }
+}
+
+@keyframes level9Glow {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(255, 255, 255, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.2);
+  }
+}
+
+@keyframes level10Shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(0.3px);
+  }
+  75% {
+    transform: translateX(-0.3px);
+  }
+}
+
+/* Classes para aplicar as animações específicas por nível - VERSÃO SUTIL */
+.avatar-level-4 {
+  animation: level4Bounce 4s ease-in-out infinite;
+}
+
+.avatar-level-5 {
+  animation: level5Pulse 4s ease-in-out infinite;
+}
+
+.avatar-level-6 {
+  animation: level6Spin 6s ease-in-out infinite;
+}
+
+.avatar-level-7 {
+  animation: level7Ping 3s ease-in-out infinite;
+}
+
+.avatar-level-8 {
+  animation: level8Float 4s ease-in-out infinite;
+}
+
+.avatar-level-9 {
+  animation: level9Glow 3s ease-in-out infinite;
+}
+
+.avatar-level-10 {
+  animation: level10Shake 4s ease-in-out infinite;
+}
+
+/* Cores progressivas para níveis 4-10 */
+.avatar-color-level-4 {
+  box-shadow: 
+    0 0 15px rgba(251, 146, 60, 0.3),
+    0 0 30px rgba(239, 68, 68, 0.2),
+    0 0 45px rgba(251, 146, 60, 0.1);
+}
+
+.avatar-color-level-5 {
+  box-shadow: 
+    0 0 15px rgba(239, 68, 68, 0.3),
+    0 0 30px rgba(236, 72, 153, 0.2),
+    0 0 45px rgba(239, 68, 68, 0.1);
+}
+
+.avatar-color-level-6 {
+  box-shadow: 
+    0 0 15px rgba(236, 72, 153, 0.3),
+    0 0 30px rgba(147, 51, 234, 0.2),
+    0 0 45px rgba(236, 72, 153, 0.1);
+}
+
+.avatar-color-level-7 {
+  box-shadow: 
+    0 0 15px rgba(147, 51, 234, 0.3),
+    0 0 30px rgba(99, 102, 241, 0.2),
+    0 0 45px rgba(147, 51, 234, 0.1);
+}
+
+.avatar-color-level-8 {
+  box-shadow: 
+    0 0 15px rgba(99, 102, 241, 0.3),
+    0 0 30px rgba(59, 130, 246, 0.2),
+    0 0 45px rgba(99, 102, 241, 0.1);
+}
+
+.avatar-color-level-9 {
+  box-shadow: 
+    0 0 15px rgba(59, 130, 246, 0.3),
+    0 0 30px rgba(6, 182, 212, 0.2),
+    0 0 45px rgba(59, 130, 246, 0.1);
+}
+
+.avatar-color-level-10 {
+  box-shadow: 
+    0 0 15px rgba(6, 182, 212, 0.3),
+    0 0 30px rgba(20, 184, 166, 0.2),
+    0 0 45px rgba(6, 182, 212, 0.1);
+}
+
+/* Remoção completa de bordas do avatar */
+.avatar-no-border {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.avatar-no-border * {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.avatar-no-border img {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Regras específicas para remover bordas do avatar */
+[data-radix-avatar-root] {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+[data-radix-avatar-image] {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+[data-radix-avatar-fallback] {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Animações sutis para bordas do card de perfil (níveis 5-10) */
+@keyframes profileCardBorder5 {
+  0%, 100% {
+    border-color: rgba(239, 68, 68, 0.3);
+    box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.1);
+  }
+  50% {
+    border-color: rgba(239, 68, 68, 0.5);
+    box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.2);
+  }
+}
+
+@keyframes profileCardBorder6 {
+  0%, 100% {
+    border-color: rgba(236, 72, 153, 0.3);
+    box-shadow: 0 0 0 1px rgba(236, 72, 153, 0.1);
+  }
+  50% {
+    border-color: rgba(236, 72, 153, 0.5);
+    box-shadow: 0 0 0 1px rgba(236, 72, 153, 0.2);
+  }
+}
+
+@keyframes profileCardBorder7 {
+  0%, 100% {
+    border-color: rgba(147, 51, 234, 0.3);
+    box-shadow: 0 0 0 1px rgba(147, 51, 234, 0.1);
+  }
+  50% {
+    border-color: rgba(147, 51, 234, 0.5);
+    box-shadow: 0 0 0 1px rgba(147, 51, 234, 0.2);
+  }
+}
+
+@keyframes profileCardBorder8 {
+  0%, 100% {
+    border-color: rgba(99, 102, 241, 0.3);
+    box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.1);
+  }
+  50% {
+    border-color: rgba(99, 102, 241, 0.5);
+    box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.2);
+  }
+}
+
+@keyframes profileCardBorder9 {
+  0%, 100% {
+    border-color: rgba(59, 130, 246, 0.3);
+    box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.1);
+  }
+  50% {
+    border-color: rgba(59, 130, 246, 0.5);
+    box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.2);
+  }
+}
+
+@keyframes profileCardBorder10 {
+  0%, 100% {
+    border-color: rgba(6, 182, 212, 0.3);
+    box-shadow: 0 0 0 1px rgba(6, 182, 212, 0.1);
+  }
+  50% {
+    border-color: rgba(6, 182, 212, 0.5);
+    box-shadow: 0 0 0 1px rgba(6, 182, 212, 0.2);
+  }
+}
+
+/* Classes para aplicar as animações de borda do card */
+.profile-card-level-5 {
+  animation: profileCardBorder5 4s ease-in-out infinite;
+  transition: all 0.3s ease;
+}
+
+.profile-card-level-5:hover {
+  border-color: rgba(239, 68, 68, 0.6) !important;
+  box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.3), 0 4px 12px rgba(239, 68, 68, 0.1) !important;
+  transform: translateY(-1px);
+}
+
+.profile-card-level-6 {
+  animation: profileCardBorder6 4s ease-in-out infinite;
+  transition: all 0.3s ease;
+}
+
+.profile-card-level-6:hover {
+  border-color: rgba(236, 72, 153, 0.6) !important;
+  box-shadow: 0 0 0 1px rgba(236, 72, 153, 0.3), 0 4px 12px rgba(236, 72, 153, 0.1) !important;
+  transform: translateY(-1px);
+}
+
+.profile-card-level-7 {
+  animation: profileCardBorder7 4s ease-in-out infinite;
+  transition: all 0.3s ease;
+}
+
+.profile-card-level-7:hover {
+  border-color: rgba(147, 51, 234, 0.6) !important;
+  box-shadow: 0 0 0 1px rgba(147, 51, 234, 0.3), 0 4px 12px rgba(147, 51, 234, 0.1) !important;
+  transform: translateY(-1px);
+}
+
+.profile-card-level-8 {
+  animation: profileCardBorder8 4s ease-in-out infinite;
+  transition: all 0.3s ease;
+}
+
+.profile-card-level-8:hover {
+  border-color: rgba(99, 102, 241, 0.6) !important;
+  box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.3), 0 4px 12px rgba(99, 102, 241, 0.1) !important;
+  transform: translateY(-1px);
+}
+
+.profile-card-level-9 {
+  animation: profileCardBorder9 4s ease-in-out infinite;
+  transition: all 0.3s ease;
+}
+
+.profile-card-level-9:hover {
+  border-color: rgba(59, 130, 246, 0.6) !important;
+  box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.3), 0 4px 12px rgba(59, 130, 246, 0.1) !important;
+  transform: translateY(-1px);
+}
+
+.profile-card-level-10 {
+  animation: profileCardBorder10 4s ease-in-out infinite;
+  transition: all 0.3s ease;
+}
+
+.profile-card-level-10:hover {
+  border-color: rgba(6, 182, 212, 0.6) !important;
+  box-shadow: 0 0 0 1px rgba(6, 182, 212, 0.3), 0 4px 12px rgba(6, 182, 212, 0.1) !important;
+  transform: translateY(-1px);
+}
+
+/* Estilos melhorados para botões do Snake Game */
+.snake-game-button {
+  position: relative;
+  overflow: hidden;
+}
+
+.snake-game-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.snake-game-button:hover::before {
+  left: 100%;
+}
+
+.snake-game-button:active {
+  transform: scale(0.98) translateY(0);
+}
+
+/* Efeito de brilho para botões com gradiente */
+.gradient-button-glow {
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+}
+
+.gradient-button-glow:hover {
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+/* Animação de shake para erro de validação */
+@keyframes shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  10%, 30%, 50%, 70%, 90% {
+    transform: translateX(-2px);
+  }
+  20%, 40%, 60%, 80% {
+    transform: translateX(2px);
+  }
+}
+
+.animate-shake {
+  animation: shake 0.6s ease-in-out;
+}
+
+/* Classe para input com erro */
+.input-error {
+  border-color: rgba(239, 68, 68, 0.6) !important;
+  box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.3) !important;
+}
+
+/* Animações para os novos modais dinâmicos */
+@keyframes fade-in-0 {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes zoom-in-95 {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes slide-in-from-bottom-8 {
+  from {
+    opacity: 0;
+    transform: translateY(2rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-in-from-top-4 {
+  from {
+    opacity: 0;
+    transform: translateY(-1rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-in-from-bottom-4 {
+  from {
+    opacity: 0;
+    transform: translateY(1rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-in {
+  animation-fill-mode: both;
+}
+
+.fade-in-0 {
+  animation-name: fade-in-0;
+}
+
+.zoom-in-95 {
+  animation-name: zoom-in-95;
+}
+
+.slide-in-from-bottom-8 {
+  animation-name: slide-in-from-bottom-8;
+}
+
+.slide-in-from-top-4 {
+  animation-name: slide-in-from-top-4;
+}
+
+.slide-in-from-bottom-4 {
+  animation-name: slide-in-from-bottom-4;
+}
+
+.duration-300 {
+  animation-duration: 300ms;
+}
+
+.duration-500 {
+  animation-duration: 500ms;
+}
+
+.duration-700 {
+  animation-duration: 700ms;
+}
+
+.delay-200 {
+  animation-delay: 200ms;
+}
+
+.delay-300 {
+  animation-delay: 300ms;
+}
+
+.delay-500 {
+  animation-delay: 500ms;
+}
+
+.delay-600 {
+  animation-delay: 600ms;
+}
+
+/* Efeitos de partículas para o modal de level up */
+@keyframes particle-float {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+    opacity: 0.2;
+  }
+  50% {
+    transform: translateY(-20px) rotate(180deg);
+    opacity: 0.8;
+  }
+}
+
+.particle-float {
+  animation: particle-float 3s ease-in-out infinite;
+}
+
+/* Efeitos de glass morphism para os modais */
+.glass-effect {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.glass-effect-dark {
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Efeitos visuais aprimorados para o card de adicionar tarefas */
+.add-todo-card {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.9) 50%, rgba(15, 23, 42, 0.95) 100%);
+}
+
+.add-todo-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(147, 51, 234, 0.08) 0%, rgba(168, 85, 247, 0.04) 50%, rgba(147, 51, 234, 0.08) 100%);
+  opacity: 0;
+  transition: opacity 0.7s ease;
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+.add-todo-card:hover::before {
+  opacity: 1;
+}
+
+.add-todo-card::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: conic-gradient(from 0deg, transparent, rgba(147, 51, 234, 0.06), transparent);
+  opacity: 0;
+  transition: opacity 0.7s ease;
+  pointer-events: none;
+  animation: rotate 6s linear infinite;
+}
+
+.add-todo-card:hover::after {
+  opacity: 1;
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Efeito de brilho sutil para inputs */
+.add-todo-input {
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.6) 0%, rgba(51, 65, 85, 0.6) 100%);
+}
+
+.add-todo-input:focus {
+  box-shadow: 0 0 0 4px rgba(147, 51, 234, 0.15), 0 8px 32px rgba(147, 51, 234, 0.2);
+  transform: translateY(-2px);
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(51, 65, 85, 0.9) 100%);
+}
+
+.add-todo-input:hover {
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(51, 65, 85, 0.8) 100%);
+  box-shadow: 0 4px 16px rgba(147, 51, 234, 0.1);
+}
+
+/* Efeito de pulso para botões de ação */
+.add-todo-button {
+  transition: all 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.add-todo-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  transition: left 0.7s ease;
+}
+
+.add-todo-button:hover::before {
+  left: 100%;
+}
+
+.add-todo-button:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 40px rgba(147, 51, 234, 0.3);
+}
+
+.add-todo-button:active {
+  transform: translateY(-1px);
+  transition: all 0.1s ease;
+}
+
+/* Efeito de brilho para elementos internos */
+.add-todo-card .content > * {
+  transition: all 0.5s ease;
+}
+
+.add-todo-card:hover .content > * {
+  transform: translateY(-1px);
+}
+
+/* Habit Tracker Styles */
+.habit-glass-card {
+  backdrop-filter: blur(16px);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.habit-glass-card:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(139, 92, 246, 0.3);
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 10px 40px rgba(139, 92, 246, 0.1);
+}
+
+.habit-progress-bar {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 9999px;
+  overflow: hidden;
+  position: relative;
+}
+
+.habit-progress-fill {
+  background: linear-gradient(90deg, #10b981, #059669);
+  height: 100%;
+  border-radius: 9999px;
+  transition: width 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.habit-progress-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.4),
+    transparent
+  );
+  animation: progress-shimmer 2s infinite;
+}
+
+@keyframes progress-shimmer {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+.habit-table-row {
+  transition: all 0.3s ease;
+}
+
+.habit-table-row:hover {
+  background: rgba(255, 255, 255, 0.05);
+  transform: translateX(4px);
+}
+
+.view-switcher-button {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.view-switcher-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(139, 92, 246, 0.3),
+    transparent
+  );
+  transition: left 0.5s ease;
+}
+
+.view-switcher-button:hover::before {
+  left: 100%;
+}
+
+.stats-card {
+  backdrop-filter: blur(12px);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  transition: all 0.3s ease;
+}
+
+.stats-card:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(139, 92, 246, 0.4);
+  transform: translateY(-2px);
+}
+
+/* Custom Checkbox Styles */
+.habit-checkbox {
+  transition: all 0.3s ease;
+}
+
+.habit-checkbox[data-state="checked"] {
+  background: #10b981 !important;
+  border-color: #10b981 !important;
+  animation: checkbox-bounce 0.3s ease;
+}
+
+@keyframes checkbox-bounce {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
