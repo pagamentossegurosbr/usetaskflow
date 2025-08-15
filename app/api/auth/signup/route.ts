@@ -66,9 +66,7 @@ export async function POST(request: NextRequest) {
         role: 'USER',
         level: 1,
         xp: 0,
-        isActive: true,
-        createdAt: new Date(),
-        updatedAt: new Date()
+        isActive: true
       },
       select: {
         id: true,

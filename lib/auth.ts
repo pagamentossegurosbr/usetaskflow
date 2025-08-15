@@ -5,7 +5,12 @@ import GoogleProvider from "next-auth/providers/google"
 import GitHubProvider from "next-auth/providers/github"
 import { prisma } from "./prisma"
 import bcrypt from "bcryptjs"
-import { Role } from "@prisma/client"
+// Role enum local para compatibilidade
+enum Role {
+  USER = "USER",
+  ADMIN = "ADMIN", 
+  OWNER = "OWNER"
+}
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
@@ -46,9 +51,13 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Usuário banido do sistema")
         }
 
-        // Para este exemplo, vamos assumir que a senha está hasheada
-        // Em produção, você deve implementar o hash de senha adequadamente
-        const isPasswordValid = await bcrypt.compare(credentials.password, user.password || "")
+        // Verificar se o usuário tem senha
+        if (!user.password) {
+          throw new Error("Conta criada com OAuth. Use login social.")
+        }
+
+        // Verificar senha
+        const isPasswordValid = await bcrypt.compare(credentials.password, user.password)
         
         if (!isPasswordValid) {
           throw new Error("Senha inválida")
@@ -106,7 +115,7 @@ export const authOptions: NextAuthOptions = {
     async session({ session, token }) {
       if (token) {
         session.user.id = token.sub!
-        session.user.role = token.role as Role
+        session.user.role = token.role as string
         // Adicionar apenas dados essenciais na sessão
         if (token.level) session.user.level = token.level as number
         if (token.xp) session.user.xp = token.xp as number
@@ -138,8 +147,8 @@ export const authOptions: NextAuthOptions = {
               create: {
                 email: user.email!,
                 name: user.name || '',
-                image: user.image,
-                role: Role.USER,
+                avatar: user.image,
+                role: 'USER',
                 level: 1,
                 xp: 0,
               }
@@ -175,7 +184,7 @@ export const authOptions: NextAuthOptions = {
 }
 
 // Função helper para verificar permissões
-export async function hasPermission(userId: string, requiredRoles: Role[]) {
+export async function hasPermission(userId: string, requiredRoles: string[]) {
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: { role: true, isBanned: true }
@@ -188,12 +197,12 @@ export async function hasPermission(userId: string, requiredRoles: Role[]) {
   return requiredRoles.includes(user.role)
 }
 
-// Função para verificar se é admin (OWNER ou MODERATOR)
+// Função para verificar se é admin (OWNER ou ADMIN)
 export async function isAdmin(userId: string) {
-  return hasPermission(userId, [Role.OWNER, Role.MODERATOR])
+  return hasPermission(userId, ['OWNER', 'ADMIN'])
 }
 
 // Função para verificar se é owner
 export async function isOwner(userId: string) {
-  return hasPermission(userId, [Role.OWNER])
+  return hasPermission(userId, ['OWNER'])
 }
