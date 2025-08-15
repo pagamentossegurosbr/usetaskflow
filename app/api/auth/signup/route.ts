@@ -46,33 +46,46 @@ export async function POST(request: NextRequest) {
 
     const { name, email, password } = validatedData
 
-    // Passo 3: Verificar se conseguimos importar o Prisma
+    // Passo 3: Criar hash da senha
+    let hashedPassword
+    try {
+      hashedPassword = await bcrypt.hash(password, 12)
+      console.log("✅ Passo 3: Hash da senha criado com sucesso")
+    } catch (error) {
+      console.log("❌ Passo 3: Erro ao criar hash da senha:", error)
+      return NextResponse.json(
+        { error: "Erro ao processar senha" },
+        { status: 500 }
+      )
+    }
+
+    // Passo 4: Importar Prisma dinamicamente
     let prisma
     try {
       const prismaModule = await import('@/lib/prisma')
       prisma = prismaModule.prisma
-      console.log("✅ Passo 3: Prisma importado com sucesso")
+      console.log("✅ Passo 4: Prisma importado com sucesso")
     } catch (error) {
-      console.log("❌ Passo 3: Erro ao importar Prisma:", error)
+      console.log("❌ Passo 4: Erro ao importar Prisma:", error)
       return NextResponse.json(
         { error: "Erro de configuração do banco de dados" },
         { status: 500 }
       )
     }
 
-    // Passo 4: Testar conexão com banco
+    // Passo 5: Testar conexão com banco
     try {
       const testResult = await prisma.$queryRaw`SELECT 1 as test`
-      console.log("✅ Passo 4: Conexão com banco OK:", testResult)
+      console.log("✅ Passo 5: Conexão com banco OK:", testResult)
     } catch (error) {
-      console.log("❌ Passo 4: Erro de conexão com banco:", error)
+      console.log("❌ Passo 5: Erro de conexão com banco:", error)
       return NextResponse.json(
         { error: "Erro de conexão com banco de dados" },
         { status: 500 }
       )
     }
 
-    // Passo 5: Verificar se tabela users existe
+    // Passo 6: Verificar se tabela users existe
     try {
       const tables = await prisma.$queryRaw`
         SELECT table_name
@@ -80,7 +93,7 @@ export async function POST(request: NextRequest) {
         WHERE table_schema = 'public'
         AND table_name = 'users'
       `
-      console.log("✅ Passo 5: Tabela users existe:", tables.length > 0)
+      console.log("✅ Passo 6: Tabela users existe:", tables.length > 0)
       if (tables.length === 0) {
         return NextResponse.json(
           { error: "Tabela users não existe no banco" },
@@ -88,43 +101,30 @@ export async function POST(request: NextRequest) {
         )
       }
     } catch (error) {
-      console.log("❌ Passo 5: Erro ao verificar tabela users:", error)
+      console.log("❌ Passo 6: Erro ao verificar tabela users:", error)
       return NextResponse.json(
         { error: "Erro ao verificar estrutura do banco" },
         { status: 500 }
       )
     }
 
-    // Passo 6: Verificar se usuário já existe
+    // Passo 7: Verificar se usuário já existe
     try {
       const existingUser = await prisma.user.findUnique({
         where: { email }
       })
-      console.log("✅ Passo 6: Verificação de usuário existente OK")
+      console.log("✅ Passo 7: Verificação de usuário existente OK")
       if (existingUser) {
-        console.log("❌ Passo 6: Usuário já existe")
+        console.log("❌ Passo 7: Usuário já existe")
         return NextResponse.json(
           { error: "Usuário já existe" },
           { status: 409 }
         )
       }
     } catch (error) {
-      console.log("❌ Passo 6: Erro ao verificar usuário existente:", error)
+      console.log("❌ Passo 7: Erro ao verificar usuário existente:", error)
       return NextResponse.json(
         { error: "Erro ao verificar usuário existente" },
-        { status: 500 }
-      )
-    }
-
-    // Passo 7: Criar hash da senha
-    let hashedPassword
-    try {
-      hashedPassword = await bcrypt.hash(password, 12)
-      console.log("✅ Passo 7: Hash da senha criado com sucesso")
-    } catch (error) {
-      console.log("❌ Passo 7: Erro ao criar hash da senha:", error)
-      return NextResponse.json(
-        { error: "Erro ao processar senha" },
         { status: 500 }
       )
     }
