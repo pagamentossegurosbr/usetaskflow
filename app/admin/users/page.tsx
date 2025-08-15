@@ -68,27 +68,21 @@ interface User {
   id: string
   name: string
   email: string
-  role: Role
-  level: number
-  xp: number
-  isBanned: boolean
-  bannedAt: string | null
-  banReason: string | null
-  subscriptionPlan: string
-  subscriptionStatus: string | null
-  maxLevel: number
-  stripeCustomerId: string | null
-  stripeSubscriptionId: string | null
-  subscriptionStartedAt: string | null
-  subscriptionExpiresAt: string | null
-  dateOfBirth: string | null
-  dateOfBirthChangeCount: number
-  createdAt: string
-  updatedAt: string
-  _count: {
-    tasks: number
-    achievements: number
-  }
+  role: string
+  // Remover campos que não existem no schema ultra-minimal
+  // isBanned: boolean
+  // bannedAt: string | null
+  // banReason: string | null
+  // subscriptionPlan: string
+  // subscriptionStatus: string | null
+  // level: number
+  // stripeCustomerId: string | null
+  // xp: number
+  // subscriptionStartedAt: string | null
+  // subscriptionExpiresAt: string | null
+  // dateOfBirth: string | null
+  // createdAt: string
+  // updatedAt: string
 }
 
 interface UsersResponse {
@@ -261,8 +255,8 @@ export default function AdminUsers() {
       role: user.role, 
       banReason: "", 
       xpAdjustment: "",
-      newPlan: user.subscriptionPlan,
-      newLevel: user.level.toString(),
+      newPlan: "",
+      newLevel: "",
       newName: user.name,
       newEmail: user.email,
       newDateOfBirth: user.dateOfBirth ? 
@@ -440,31 +434,31 @@ export default function AdminUsers() {
                     <div>
                       <div className="flex items-center gap-2 mb-1">
                         <p className="font-medium">{user.name || "Sem nome"}</p>
-                        {user.isBanned && (
+                        {/* {user.isBanned && (
                           <Badge variant="destructive" className="text-xs">Banido</Badge>
-                        )}
+                        )} */}
                       </div>
                       <p className="text-sm text-muted-foreground">{user.email}</p>
                       <div className="flex items-center gap-2 mt-1">
-                        {getRoleBadge(user.role)}
-                        {getPlanBadge(user.subscriptionPlan)}
-                        {getStatusBadge(user.subscriptionStatus)}
+                        {getRoleBadge(user.role as Role)}
+                        {/* {getPlanBadge(user.subscriptionPlan)} */}
+                        {/* {getStatusBadge(user.subscriptionStatus)} */}
                       </div>
-                      <div className="flex items-center gap-2 mt-1">
+                      {/* <div className="flex items-center gap-2 mt-1">
                         <Badge variant="outline" className="text-xs">
                           Nível {user.level} • {user.xp} XP
                         </Badge>
                         <Badge variant="outline" className="text-xs">
                           Max Level: {user.maxLevel}
                         </Badge>
-                      </div>
+                      </div> */}
                     </div>
                   </div>
                   
                   <div className="flex items-center gap-4">
                     <div className="text-right text-sm">
-                      <p>{user._count.tasks} tarefas</p>
-                      <p className="text-muted-foreground">{user._count.achievements} conquistas</p>
+                      <p>0 tarefas</p>
+                      <p className="text-muted-foreground">0 conquistas</p>
                     </div>
                     
                     <DropdownMenu>
@@ -493,22 +487,22 @@ export default function AdminUsers() {
                         
                         <DropdownMenuSeparator />
                         <DropdownMenuLabel>Plano & Progresso</DropdownMenuLabel>
-                        <DropdownMenuItem onClick={() => openActionDialog("changePlan", user)}>
+                        {/* <DropdownMenuItem onClick={() => openActionDialog("changePlan", user)}>
                           <CreditCard className="mr-2 h-4 w-4" />
                           Alterar Plano
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => openActionDialog("changeLevel", user)}>
+                        </DropdownMenuItem> */}
+                        {/* <DropdownMenuItem onClick={() => openActionDialog("changeLevel", user)}>
                           <TrendingUp className="mr-2 h-4 w-4" />
                           Alterar Nível
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => openActionDialog("adjustXP", user)}>
+                        </DropdownMenuItem> */}
+                        {/* <DropdownMenuItem onClick={() => openActionDialog("adjustXP", user)}>
                           <Zap className="mr-2 h-4 w-4" />
                           Ajustar XP
-                        </DropdownMenuItem>
+                        </DropdownMenuItem> */}
                         
                         <DropdownMenuSeparator />
                         <DropdownMenuLabel>Moderação</DropdownMenuLabel>
-                        {user.isBanned ? (
+                        {/* {user.isBanned ? (
                           <DropdownMenuItem onClick={() => openActionDialog("unban", user)}>
                             <UserCheck className="mr-2 h-4 w-4" />
                             Desbanir
@@ -521,7 +515,7 @@ export default function AdminUsers() {
                             <Ban className="mr-2 h-4 w-4" />
                             Banir
                           </DropdownMenuItem>
-                        )}
+                        )} */}
                         
                         <DropdownMenuSeparator />
                         <DropdownMenuItem 
@@ -794,16 +788,16 @@ export default function AdminUsers() {
                   </div>
                   <div>
                     <Label className="text-sm font-medium text-muted-foreground">Cargo</Label>
-                    <div className="mt-1">{getRoleBadge(selectedUser.role)}</div>
+                    <div className="mt-1">{getRoleBadge(selectedUser.role as Role)}</div>
                   </div>
                   <div>
                     <Label className="text-sm font-medium text-muted-foreground">Status</Label>
                     <div className="mt-1">
-                      {selectedUser.isBanned ? (
+                      {/* {selectedUser.isBanned ? (
                         <Badge variant="destructive">Banido</Badge>
                       ) : (
                         <Badge variant="secondary">Ativo</Badge>
-                      )}
+                      )} */}
                     </div>
                   </div>
                   <div>
@@ -835,7 +829,7 @@ export default function AdminUsers() {
                         <Edit className="h-3 w-3" />
                       </Button>
                     </div>
-                    {selectedUser.dateOfBirth && (
+                    {/* {selectedUser.dateOfBirth && (
                       <div className="flex gap-2 mt-1">
                         <Badge variant="outline">
                           {selectedUser.dateOfBirthChangeCount} alteração{selectedUser.dateOfBirthChangeCount > 1 ? 'ões' : ''}
@@ -844,7 +838,7 @@ export default function AdminUsers() {
                           {selectedUser.dateOfBirthChangeCount >= 2 ? 'Sem alterações restantes' : `${2 - selectedUser.dateOfBirthChangeCount} restantes`}
                         </Badge>
                       </div>
-                    )}
+                    )} */}
                   </div>
                 </CardContent>
               </Card>
@@ -870,8 +864,8 @@ export default function AdminUsers() {
                   <div>
                     <Label className="text-sm font-medium text-muted-foreground">Atividade</Label>
                     <div className="flex gap-2 mt-1">
-                      <Badge variant="outline">{selectedUser._count.tasks} tarefas</Badge>
-                      <Badge variant="outline">{selectedUser._count.achievements} conquistas</Badge>
+                      <Badge variant="outline">0 tarefas</Badge>
+                      <Badge variant="outline">0 conquistas</Badge>
                     </div>
                   </div>
                 </CardContent>
@@ -890,30 +884,30 @@ export default function AdminUsers() {
                     <Label className="text-sm font-medium text-muted-foreground">Plano Atual</Label>
                     <div className="mt-1">{getPlanBadge(selectedUser.subscriptionPlan)}</div>
                   </div>
-                  {selectedUser.subscriptionStatus && (
+                  {/* {selectedUser.subscriptionStatus && (
                     <div>
                       <Label className="text-sm font-medium text-muted-foreground">Status da Assinatura</Label>
                       <div className="mt-1">{getStatusBadge(selectedUser.subscriptionStatus)}</div>
                     </div>
-                  )}
-                  {selectedUser.stripeCustomerId && (
+                  )} */}
+                  {/* {selectedUser.stripeCustomerId && (
                     <div>
                       <Label className="text-sm font-medium text-muted-foreground">Customer ID</Label>
                       <p className="font-mono text-sm">{selectedUser.stripeCustomerId}</p>
                     </div>
-                  )}
-                  {selectedUser.subscriptionStartedAt && (
+                  )} */}
+                  {/* {selectedUser.subscriptionStartedAt && (
                     <div>
                       <Label className="text-sm font-medium text-muted-foreground">Iniciada em</Label>
                       <p className="text-sm">{new Date(selectedUser.subscriptionStartedAt).toLocaleDateString('pt-BR')}</p>
                     </div>
-                  )}
-                  {selectedUser.subscriptionExpiresAt && (
+                  )} */}
+                  {/* {selectedUser.subscriptionExpiresAt && (
                     <div>
                       <Label className="text-sm font-medium text-muted-foreground">Expira em</Label>
                       <p className="text-sm">{new Date(selectedUser.subscriptionExpiresAt).toLocaleDateString('pt-BR')}</p>
                     </div>
-                  )}
+                  )} */}
                 </CardContent>
               </Card>
 
@@ -934,17 +928,17 @@ export default function AdminUsers() {
                     <Label className="text-sm font-medium text-muted-foreground">Última atualização</Label>
                     <p className="text-sm">{new Date(selectedUser.updatedAt).toLocaleDateString('pt-BR')}</p>
                   </div>
-                  {selectedUser.bannedAt && (
+                  {/* {selectedUser.bannedAt && (
                     <div>
                       <Label className="text-sm font-medium text-muted-foreground">Banido em</Label>
                       <p className="text-sm">{new Date(selectedUser.bannedAt).toLocaleDateString('pt-BR')}</p>
                     </div>
-                  )}
+                  )} */}
                 </CardContent>
               </Card>
 
               {/* Informações de Banimento */}
-              {selectedUser.isBanned && selectedUser.banReason && (
+              {/* {selectedUser.isBanned && selectedUser.banReason && (
                 <Card className="md:col-span-2">
                   <CardHeader>
                     <CardTitle className="text-lg flex items-center gap-2 text-destructive">
@@ -961,7 +955,7 @@ export default function AdminUsers() {
                     </div>
                   </CardContent>
                 </Card>
-              )}
+              )} */}
             </div>
           )}
 
