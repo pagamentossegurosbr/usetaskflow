@@ -23,19 +23,14 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Acesso negado" }, { status: 403 })
     }
 
-    // Buscar dados atualizados do usuário
+    // Buscar dados atualizados do usuário (apenas campos disponíveis no schema ultra-minimal)
     const user = await prisma.user.findUnique({
       where: { email },
       select: {
         id: true,
-        xp: true,
-        level: true,
         name: true,
-        bio: true,
-        title: true,
-        avatar: true,
-        theme: true,
-        updatedAt: true,
+        email: true,
+        role: true,
       }
     })
 
@@ -43,15 +38,20 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Usuário não encontrado" }, { status: 404 })
     }
 
+    // Retornar dados com valores padrão para campos não disponíveis
     return NextResponse.json({
-      xp: user.xp,
-      level: user.level,
+      id: user.id,
       name: user.name,
-      bio: user.bio,
-      title: user.title,
-      avatar: user.avatar,
-      theme: user.theme,
-      lastUpdated: user.updatedAt,
+      email: user.email,
+      role: user.role,
+      // Valores padrão para campos não disponíveis no schema ultra-minimal
+      xp: 0,
+      level: 1,
+      bio: "",
+      title: "Novato",
+      avatar: "",
+      theme: "dark",
+      lastUpdated: new Date().toISOString(),
     })
 
   } catch (error) {

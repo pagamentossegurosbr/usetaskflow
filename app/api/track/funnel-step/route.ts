@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,133 +12,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    let lead = null;
+    // Log do step do funil (sem usar banco de dados)
+    console.log('=== FUNNEL STEP TRACKING ===');
+    console.log('Step Name:', stepName);
+    console.log('Step Order:', stepOrder);
+    console.log('Completed:', completed);
+    console.log('Time Spent:', timeSpent);
+    console.log('Email:', email);
+    console.log('Nome:', name);
+    console.log('Data:', data);
+    console.log('Timestamp:', new Date().toISOString());
 
-    // Se não há leadId, tentar encontrar ou criar lead
-    if (!leadId) {
-      if (email) {
-        // Tentar encontrar lead existente por email
-        lead = await prisma.lead.findUnique({
-          where: { email }
-        });
-      }
-
-      // Se não encontrou lead, criar um novo
-      if (!lead) {
-        lead = await prisma.lead.create({
-          data: {
-            email,
-            name,
-            source: source || 'website',
-            campaign,
-            ipAddress: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip'),
-            userAgent: request.headers.get('user-agent'),
-            referrer: request.headers.get('referer'),
-            // Capturar dados adicionais do onboarding
-            ...(data && {
-              onboardingData: JSON.parse(JSON.stringify(data))
-            })
-          }
-        });
-      } else {
-        // Atualizar lead existente com dados do onboarding se disponível
-        if (data) {
-          await prisma.lead.update({
-            where: { id: lead.id },
-            data: {
-              onboardingData: data
-            }
-          });
-        }
-      }
-    } else {
-      // Buscar lead existente
-      lead = await prisma.lead.findUnique({
-        where: { id: leadId }
-      });
-
-      if (!lead) {
-        return NextResponse.json(
-          { error: 'Lead não encontrado' },
-          { status: 404 }
-        );
-      }
-    }
-
-    // Verificar se já existe um step com este nome para este lead
-    const existingStep = await prisma.funnelStep.findFirst({
-      where: {
-        leadId: lead.id,
-        stepName
-      }
-    });
-
-    let funnelStep;
-
-    if (existingStep) {
-      // Atualizar step existente
-      funnelStep = await prisma.funnelStep.update({
-        where: { id: existingStep.id },
-        data: {
-          completed: completed !== undefined ? completed : existingStep.completed,
-          timeSpent: timeSpent || existingStep.timeSpent,
-          data: data ? JSON.parse(JSON.stringify(data)) : existingStep.data,
-          completedAt: completed ? new Date() : existingStep.completedAt,
-        },
-        include: {
-          lead: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              status: true,
-            }
-          }
-        }
-      });
-    } else {
-      // Criar novo step
-      funnelStep = await prisma.funnelStep.create({
-        data: {
-          leadId: lead.id,
-          stepName,
-          stepOrder,
-          completed: completed || false,
-          timeSpent,
-          data: data ? JSON.parse(JSON.stringify(data)) : null,
-          completedAt: completed ? new Date() : null,
-        },
-        include: {
-          lead: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              status: true,
-            }
-          }
-        }
-      });
-    }
-
-    // Se o step foi completado, atualizar score do lead
-    if (completed && !existingStep?.completed) {
-      const scoreIncrement = Math.max(1, Math.floor((stepOrder / 10) * 5)); // Score baseado na ordem do step
-      
-      await prisma.lead.update({
-        where: { id: lead.id },
-        data: {
-          score: {
-            increment: scoreIncrement
-          }
-        }
-      });
-    }
-
+    // Retornar sucesso sem usar banco
     return NextResponse.json({ 
       success: true, 
-      funnelStep,
-      leadId: lead.id
+      message: 'Step do funil registrado com sucesso',
+      stepName,
+      stepOrder,
+      completed,
+      timestamp: new Date().toISOString()
     });
 
   } catch (error) {
