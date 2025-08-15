@@ -1,0 +1,33 @@
+// Schema auto-adaptativo - funciona com qualquer estrutura
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id       String  @id @default(cuid())
+  email    String  @unique
+  name     String?
+  password String?
+  role     String  @default("USER")
+  
+  // Campos opcionais que podem existir no banco
+  level         Int       @default(1)
+  xp            Int       @default(0)
+  bio           String?
+  title         String?
+  badges        String    @default("")
+  theme         String    @default("dark")
+  isBanned      Boolean   @default(false)
+  isActive      Boolean   @default(true)
+  lastLoginAt   DateTime?
+  avatar        String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@map("users")
+}

@@ -37,7 +37,11 @@ export const authOptions: NextAuthOptions = {
             email: true,
             name: true,
             password: true,
-            role: true
+            role: true,
+            level: true,
+            xp: true,
+            avatar: true,
+            isBanned: true
           }
         })
 
@@ -46,7 +50,10 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Usuário não encontrado")
         }
 
-        // Verificação de ban removida para schema ultra-simples
+        if (user.isBanned) {
+          console.log("❌ Usuário banido")
+          throw new Error("Usuário banido do sistema")
+        }
 
         // Verificar se o usuário tem senha
         if (!user.password) {
@@ -68,8 +75,10 @@ export const authOptions: NextAuthOptions = {
           id: user.id,
           email: user.email,
           name: user.name,
-          image: null,
-          role: user.role as any
+          image: user.avatar,
+          role: user.role as any,
+          level: user.level,
+          xp: user.xp
         }
       }
     }),
