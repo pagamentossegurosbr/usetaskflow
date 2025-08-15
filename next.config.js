@@ -48,7 +48,7 @@ const nextConfig = {
   async headers() {
     return [
       {
-        source: '/(.*)',
+        source: '/:path*',
         headers: [
           {
             key: 'X-Frame-Options',
@@ -93,7 +93,7 @@ const nextConfig = {
       },
       // Headers específicos para APIs
       {
-        source: '/api/(.*)',
+        source: '/api/:path*',
         headers: [
           {
             key: 'Cache-Control',
@@ -122,7 +122,7 @@ const nextConfig = {
       },
       // Headers para assets estáticos
       {
-        source: '/(.*\\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot))',
+        source: '/:path*.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)',
         headers: [
           {
             key: 'Cache-Control',
