@@ -33,7 +33,7 @@ class AutoSyncMiddleware {
     }
 
     // Verificar se há muitas mudanças pendentes
-    const pendingChanges = localStorageManager.getPendingChanges();
+    const pendingChanges = localStorageManager.getPendingChanges() || [];
     if (pendingChanges.length > 10) {
       console.log('⚠️ Muitas mudanças pendentes, aguardando processamento...');
       return;
@@ -110,7 +110,7 @@ class AutoSyncMiddleware {
   // Métodos específicos para diferentes operações
   async onTaskCreated(taskData: any): Promise<void> {
     // Salvar tarefa localmente primeiro
-    const currentTasks = localStorageManager.getTasks();
+    const currentTasks = localStorageManager.getTasks() || [];
     const updatedTasks = [...currentTasks, taskData];
     localStorageManager.saveTasks(updatedTasks);
     
@@ -119,7 +119,7 @@ class AutoSyncMiddleware {
 
   async onTaskUpdated(taskData: any): Promise<void> {
     // Atualizar tarefa localmente primeiro
-    const currentTasks = localStorageManager.getTasks();
+    const currentTasks = localStorageManager.getTasks() || [];
     const updatedTasks = currentTasks.map(task => 
       task.id === taskData.id ? { ...task, ...taskData } : task
     );
@@ -130,7 +130,7 @@ class AutoSyncMiddleware {
 
   async onTaskDeleted(taskId: string): Promise<void> {
     // Remover tarefa localmente primeiro
-    const currentTasks = localStorageManager.getTasks();
+    const currentTasks = localStorageManager.getTasks() || [];
     const updatedTasks = currentTasks.filter(task => task.id !== taskId);
     localStorageManager.saveTasks(updatedTasks);
     
@@ -139,7 +139,7 @@ class AutoSyncMiddleware {
 
   async onTaskCompleted(taskData: any): Promise<void> {
     // Atualizar tarefa localmente primeiro
-    const currentTasks = localStorageManager.getTasks();
+    const currentTasks = localStorageManager.getTasks() || [];
     const updatedTasks = currentTasks.map(task => 
       task.id === taskData.id ? { ...task, ...taskData } : task
     );
@@ -158,7 +158,7 @@ class AutoSyncMiddleware {
   // Obter estatísticas de sincronização
   getSyncStats(): { pendingChanges: number; lastSync: string | null } {
     return {
-      pendingChanges: localStorageManager.getPendingChanges().length,
+      pendingChanges: (localStorageManager.getPendingChanges() || []).length,
       lastSync: localStorageManager.getLastSync()
     };
   }
@@ -170,7 +170,7 @@ class AutoSyncMiddleware {
 
   // Forçar sincronização de mudanças pendentes
   async forceSyncPendingChanges(): Promise<void> {
-    const pendingChanges = localStorageManager.getPendingChanges();
+    const pendingChanges = localStorageManager.getPendingChanges() || [];
     if (pendingChanges.length > 0) {
       console.log(`🔄 Forçando sincronização de ${pendingChanges.length} mudanças pendentes`);
       await this.triggerSync('force_sync_pending', { count: pendingChanges.length });

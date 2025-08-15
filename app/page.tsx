@@ -341,7 +341,8 @@ export default function Home() {
       const response = await fetch('/api/tasks');
       if (response.ok) {
         const data = await response.json();
-        const tasksWithDates = data.tasks
+        const tasks = data.tasks || []; // Garantir que tasks seja um array
+        const tasksWithDates = tasks
           .filter((task: any) => task.id && task.id !== 'undefined' && task.id !== 'null') // Filtrar tarefas sem ID válido
           .map((task: any) => ({
             id: task.id.toString(),
@@ -354,7 +355,7 @@ export default function Home() {
           }));
         
         // Log para debug
-        if (data.tasks.length !== tasksWithDates.length) {
+        if (tasks.length !== tasksWithDates.length) {
           // Log removido para melhorar performance
         }
         
@@ -841,7 +842,7 @@ export default function Home() {
         toast.info('Editar perfil - clique no botão "Editar Perfil" no cabeçalho');
       }}
       onClearCompleted={() => {
-        const completedTodos = todos.filter(todo => todo.completed);
+        const completedTodos = todos.filter(todo => todo.completed) || [];
         if (completedTodos.length > 0) {
           deleteMultipleTodos(completedTodos.map(todo => todo.id));
         }
