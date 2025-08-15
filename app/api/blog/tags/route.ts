@@ -32,9 +32,9 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('Erro ao buscar tags:', error);
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    );
+    // Retornar array vazio se a tabela não existir
+    return NextResponse.json({
+      tags: []
+    });
   }
 }

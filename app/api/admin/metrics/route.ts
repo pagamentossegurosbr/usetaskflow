@@ -20,15 +20,42 @@ export async function GET(request: NextRequest) {
         }
       }
     });
-    const totalTasks = await prisma.task.count();
-    const completedTasks = await prisma.task.count({
-      where: {
-        completed: true
-      }
-    });
-    const totalAchievements = await prisma.userAchievement.count();
-    const totalBlogPosts = await prisma.blogPost.count();
-    const totalCaveContent = await prisma.caveContent.count();
+    
+    // Métricas com tratamento de erro para tabelas que podem não existir
+    let totalTasks = 0;
+    let completedTasks = 0;
+    let totalAchievements = 0;
+    let totalBlogPosts = 0;
+    let totalCaveContent = 0;
+    
+    try {
+      totalTasks = await prisma.task.count();
+      completedTasks = await prisma.task.count({
+        where: {
+          completed: true
+        }
+      });
+    } catch (error) {
+      console.log('Tabela tasks não disponível');
+    }
+    
+    try {
+      totalAchievements = await prisma.userAchievement.count();
+    } catch (error) {
+      console.log('Tabela userAchievements não disponível');
+    }
+    
+    try {
+      totalBlogPosts = await prisma.blogPost.count();
+    } catch (error) {
+      console.log('Tabela blogPosts não disponível');
+    }
+    
+    try {
+      totalCaveContent = await prisma.caveContent.count();
+    } catch (error) {
+      console.log('Tabela caveContent não disponível');
+    }
 
     // Buscar atividade recente
     let recentActivity = [];

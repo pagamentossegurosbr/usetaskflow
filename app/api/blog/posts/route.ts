@@ -92,9 +92,11 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('Erro ao buscar posts do blog:', error);
-    return NextResponse.json(
-      { error: 'Erro interno do servidor', details: error instanceof Error ? error.message : 'Unknown error' },
-      { status: 500 }
-    );
+    // Retornar array vazio se a tabela não existir
+    return NextResponse.json({
+      posts: [],
+      total: 0,
+      totalPages: 0
+    });
   }
 }

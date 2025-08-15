@@ -26,20 +26,35 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ];
 
-  // Buscar posts do blog
-  const posts = await prisma.blogPost.findMany({
-    where: {
-      status: 'published'
-    },
-    select: {
-      slug: true,
-      updatedAt: true,
-      publishedAt: true
-    },
-    orderBy: {
-      publishedAt: 'desc'
-    }
-  });
+  // Buscar posts do blog (com tratamento de erro)
+  let posts: any[] = [];
+  let categories: any[] = [];
+  
+  try {
+    posts = await prisma.blogPost.findMany({
+      where: {
+        status: 'published'
+      },
+      select: {
+        slug: true,
+        updatedAt: true,
+        publishedAt: true
+      },
+      orderBy: {
+        publishedAt: 'desc'
+      }
+    });
+
+    // Buscar categorias
+    categories = await prisma.blogPost.groupBy({
+      by: ['category'],
+      where: {
+        status: 'published'
+      }
+    });
+  } catch (error) {
+    console.log('Blog tables not available, skipping blog sitemap entries');
+  }
 
   // Páginas dinâmicas dos posts
   const blogPages = posts.map((post) => ({
@@ -48,14 +63,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     changeFrequency: 'weekly' as const,
     priority: 0.7,
   }));
-
-  // Buscar categorias
-  const categories = await prisma.blogPost.groupBy({
-    by: ['category'],
-    where: {
-      status: 'published'
-    }
-  });
 
   // Páginas de categorias
   const categoryPages = categories
