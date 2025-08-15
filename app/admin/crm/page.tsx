@@ -469,9 +469,9 @@ export default function AdminCRM() {
               </CardHeader>
               <CardContent>
                 {metrics?.leads?.byStatus?.map((item) => (
-                  <div key={item.status} className="flex items-center justify-between py-2">
-                    <span className="text-sm">{getStatusBadge(item.status)}</span>
-                    <span className="font-medium">{item.count}</span>
+                  <div key={item.status || 'unknown'} className="flex items-center justify-between py-2">
+                    <span className="text-sm">{getStatusBadge(item.status || 'unknown')}</span>
+                    <span className="font-medium">{item.count || 0}</span>
                   </div>
                 ))}
               </CardContent>
@@ -485,9 +485,9 @@ export default function AdminCRM() {
               </CardHeader>
               <CardContent>
                 {metrics?.leads?.bySource?.map((item) => (
-                  <div key={item.source} className="flex items-center justify-between py-2">
-                    <span className="text-sm">{getSourceBadge(item.source)}</span>
-                    <span className="font-medium">{item.count}</span>
+                  <div key={item.source || 'unknown'} className="flex items-center justify-between py-2">
+                    <span className="text-sm">{getSourceBadge(item.source || 'unknown')}</span>
+                    <span className="font-medium">{item.count || 0}</span>
                   </div>
                 ))}
               </CardContent>
@@ -718,14 +718,14 @@ export default function AdminCRM() {
                         <div>
                           <p className="font-medium">{step.step}</p>
                           <p className="text-sm text-muted-foreground">
-                            {step.completed} de {step.total} completaram
+                            {step.completed || 0} de {step.total || 0} completaram
                           </p>
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="font-medium">{step.completionRate}%</p>
+                        <p className="font-medium">{step.completionRate || 0}%</p>
                         <p className="text-sm text-muted-foreground">
-                          {step.avgTime} min em média
+                          {step.avgTime || 0} min em média
                         </p>
                       </div>
                     </div>
