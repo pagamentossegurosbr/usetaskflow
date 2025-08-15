@@ -30,7 +30,6 @@ export const authOptions: NextAuthOptions = {
             email: true,
             name: true,
             password: true,
-            image: true,
             avatar: true,
             role: true,
             level: true,
@@ -61,25 +60,29 @@ export const authOptions: NextAuthOptions = {
           data: { lastLoginAt: new Date() }
         })
 
-        // Log do login
-        await prisma.activityLog.create({
-          data: {
-            userId: user.id,
-            action: "user_signin",
-            details: {
-              email: user.email,
-              loginMethod: "credentials"
-            },
-            ipAddress: "unknown", // Em produção, extrair do request
-            userAgent: "unknown",
-          }
-        })
+        // Log do login (com tratamento de erro)
+        try {
+          await prisma.activityLog.create({
+            data: {
+              userId: user.id,
+              action: "user_signin",
+              details: {
+                email: user.email,
+                loginMethod: "credentials"
+              },
+              ipAddress: "unknown", // Em produção, extrair do request
+              userAgent: "unknown",
+            }
+          })
+        } catch (error) {
+          console.log('ActivityLog table not available, skipping login log');
+        }
 
         return {
           id: user.id,
           email: user.email,
           name: user.name,
-          image: user.image || user.avatar,
+          image: user.avatar,
           role: user.role,
           level: user.level,
           xp: user.xp,

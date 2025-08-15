@@ -42,7 +42,6 @@ model User {
   name          String?
   email         String    @unique
   emailVerified DateTime?
-  image         String?
   password      String?
   role          Role      @default(USER)
   level         Int       @default(1)
