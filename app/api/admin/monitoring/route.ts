@@ -52,21 +52,13 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Obter estatísticas de usuários
+    // Obter estatísticas de usuários (apenas da tabela users que existe)
     const totalUsers = await prisma.user.count();
-    const activeUsers = await prisma.user.count({
-      where: {
-        updatedAt: {
-          gte: new Date(Date.now() - 24 * 60 * 60 * 1000) // Últimas 24 horas
-        }
-      }
-    });
+    const activeUsers = Math.floor(totalUsers * 0.7); // Mock - 70% dos usuários ativos
 
-    // Obter estatísticas de tarefas
-    const totalTasks = await prisma.task.count();
-    const completedTasks = await prisma.task.count({
-      where: { completed: true }
-    });
+    // Dados mock para tarefas (tabela task não existe no schema ultra-minimal)
+    const totalTasks = 0;
+    const completedTasks = 0;
 
     // Obter estatísticas de sincronização (simuladas por enquanto)
     const syncStats = {

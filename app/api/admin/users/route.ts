@@ -34,20 +34,22 @@ export async function GET(request: NextRequest) {
           name: true,
           email: true,
           role: true,
-          createdAt: true,
-          lastLoginAt: true,
-          subscriptionPlan: true,
-                      _count: {
-              select: {
-                tasks: true,
-                achievements: true,
-                habitTrackers: true,
-                readingLibrary: true,
-                pomodoroSessions: true
-              }
-            }
+          // Remover campos que não existem no schema ultra-minimal
+          // createdAt: true,
+          // lastLoginAt: true,
+          // subscriptionPlan: true,
+          // _count: {
+          //   select: {
+          //     tasks: true,
+          //     achievements: true,
+          //     habitTrackers: true,
+          //     readingLibrary: true,
+          //     pomodoroSessions: true
+          //   }
+          // }
         },
-        orderBy: { createdAt: 'desc' },
+        // orderBy: { createdAt: 'desc' }, // Campo não existe
+        orderBy: { id: 'desc' }, // Usar id como fallback
         skip: (page - 1) * limit,
         take: limit
       }),
@@ -81,7 +83,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { id, role, subscriptionPlan } = body;
+    const { id, role } = body; // Remover subscriptionPlan que não existe
 
     if (!id) {
       return NextResponse.json(
@@ -93,16 +95,17 @@ export async function PUT(request: NextRequest) {
     const user = await prisma.user.update({
       where: { id },
       data: {
-        role,
-        subscriptionPlan
+        role
+        // Remover subscriptionPlan que não existe no schema ultra-minimal
       },
       select: {
         id: true,
         name: true,
         email: true,
-        role: true,
-        subscriptionPlan: true,
-        updatedAt: true
+        role: true
+        // Remover campos que não existem
+        // subscriptionPlan: true,
+        // updatedAt: true
       }
     });
 
