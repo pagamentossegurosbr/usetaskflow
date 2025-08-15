@@ -37,11 +37,7 @@ export const authOptions: NextAuthOptions = {
             email: true,
             name: true,
             password: true,
-            role: true,
-            level: true,
-            xp: true,
-            avatar: true,
-            isBanned: true
+            role: true
           }
         })
 
@@ -50,10 +46,7 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Usuário não encontrado")
         }
 
-        if (user.isBanned) {
-          console.log("❌ Usuário banido")
-          throw new Error("Usuário banido do sistema")
-        }
+        // Verificação de ban removida para schema ultra-simples
 
         // Verificar se o usuário tem senha
         if (!user.password) {
@@ -75,10 +68,8 @@ export const authOptions: NextAuthOptions = {
           id: user.id,
           email: user.email,
           name: user.name,
-          image: user.avatar,
-          role: user.role as any,
-          level: user.level,
-          xp: user.xp
+          image: null,
+          role: user.role as any
         }
       }
     }),
@@ -139,21 +130,12 @@ export const authOptions: NextAuthOptions = {
                   email: true,
                   name: true,
                   password: true,
-                  role: true,
-                  level: true,
-                  xp: true,
-                  avatar: true,
-                  isBanned: true
+                  role: true
                 }
               })
               
               if (!dbUser) {
                 console.log("❌ Usuário não encontrado no banco")
-                return false
-              }
-              
-              if (dbUser.isBanned) {
-                console.log("❌ Usuário banido")
                 return false
               }
               
@@ -169,12 +151,6 @@ export const authOptions: NextAuthOptions = {
                 console.log("❌ Senha inválida")
                 return false
               }
-              
-              // Atualizar último login
-              await prisma.user.update({
-                where: { id: dbUser.id },
-                data: { lastLoginAt: new Date() }
-              })
               
               console.log("✅ Login bem-sucedido:", dbUser.email)
               return true
@@ -196,28 +172,12 @@ export const authOptions: NextAuthOptions = {
                   id: true,
                   email: true,
                   name: true,
-                  role: true,
-                  level: true,
-                  xp: true,
-                  avatar: true,
-                  isBanned: true
+                  role: true
                 }
               })
               
               if (dbUser) {
                 console.log("✅ Usuário OAuth já existe:", dbUser.email)
-                
-                if (dbUser.isBanned) {
-                  console.log("❌ Usuário banido")
-                  return false
-                }
-                
-                // Atualizar último login
-                await prisma.user.update({
-                  where: { id: dbUser.id },
-                  data: { lastLoginAt: new Date() }
-                })
-                
                 return true
               }
               
@@ -227,21 +187,13 @@ export const authOptions: NextAuthOptions = {
                 data: {
                   email: user.email!,
                   name: user.name || 'Usuário OAuth',
-                  role: 'USER',
-                  level: 1,
-                  xp: 0,
-                  isActive: true,
-                  avatar: user.image
+                  role: 'USER'
                 },
                 select: {
                   id: true,
                   email: true,
                   name: true,
-                  role: true,
-                  level: true,
-                  xp: true,
-                  avatar: true,
-                  isBanned: true
+                  role: true
                 }
               })
               

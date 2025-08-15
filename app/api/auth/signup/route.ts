@@ -63,18 +63,13 @@ export async function POST(request: NextRequest) {
         name,
         email,
         password: hashedPassword,
-        role: 'USER',
-        level: 1,
-        xp: 0,
-        isActive: true
+        role: 'USER'
       },
       select: {
         id: true,
         name: true,
         email: true,
-        role: true,
-        level: true,
-        xp: true
+        role: true
       }
     })
     console.log("Usuário criado com sucesso:", user.id)
@@ -86,9 +81,7 @@ export async function POST(request: NextRequest) {
         id: user.id,
         name: user.name,
         email: user.email,
-        role: user.role,
-        level: user.level,
-        xp: user.xp
+        role: user.role
       }
     }, { status: 201 })
 
