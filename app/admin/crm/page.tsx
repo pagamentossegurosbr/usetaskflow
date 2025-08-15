@@ -402,9 +402,9 @@ export default function AdminCRM() {
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{metrics.leads.total}</div>
+              <div className="text-2xl font-bold">{metrics?.leads?.total || 0}</div>
               <p className="text-xs text-muted-foreground">
-                +{metrics.leads.new} novos nos últimos {metrics.period.days} dias
+                +{metrics?.leads?.new || 0} novos nos últimos {metrics?.period?.days || 30} dias
               </p>
             </CardContent>
           </Card>
@@ -415,9 +415,9 @@ export default function AdminCRM() {
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{metrics.leads.conversionRate}%</div>
+              <div className="text-2xl font-bold">{metrics?.leads?.conversionRate || 0}%</div>
               <p className="text-xs text-muted-foreground">
-                {metrics.leads.converted} convertidos
+                {metrics?.leads?.converted || 0} convertidos
               </p>
             </CardContent>
           </Card>
@@ -428,9 +428,9 @@ export default function AdminCRM() {
               <Link className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{metrics.links.active}</div>
+              <div className="text-2xl font-bold">{metrics?.links?.active || 0}</div>
               <p className="text-xs text-muted-foreground">
-                {metrics.links.totalClicks} cliques totais
+                {metrics?.links?.totalClicks || 0} cliques totais
               </p>
             </CardContent>
           </Card>
@@ -441,7 +441,7 @@ export default function AdminCRM() {
               <Target className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{metrics.leads.averageScore}</div>
+              <div className="text-2xl font-bold">{metrics?.leads?.averageScore || 0}</div>
               <p className="text-xs text-muted-foreground">
                 Engajamento dos leads
               </p>
@@ -468,7 +468,7 @@ export default function AdminCRM() {
                 <CardDescription>Distribuição dos leads por status atual</CardDescription>
               </CardHeader>
               <CardContent>
-                {metrics?.leads.byStatus.map((item) => (
+                {metrics?.leads?.byStatus?.map((item) => (
                   <div key={item.status} className="flex items-center justify-between py-2">
                     <span className="text-sm">{getStatusBadge(item.status)}</span>
                     <span className="font-medium">{item.count}</span>
@@ -484,7 +484,7 @@ export default function AdminCRM() {
                 <CardDescription>Origem dos leads</CardDescription>
               </CardHeader>
               <CardContent>
-                {metrics?.leads.bySource.map((item) => (
+                {metrics?.leads?.bySource?.map((item) => (
                   <div key={item.source} className="flex items-center justify-between py-2">
                     <span className="text-sm">{getSourceBadge(item.source)}</span>
                     <span className="font-medium">{item.count}</span>
@@ -709,9 +709,9 @@ export default function AdminCRM() {
               <CardDescription>Análise dos passos do funil</CardDescription>
             </CardHeader>
             <CardContent>
-              {metrics?.funnel.steps && metrics.funnel.steps.length > 0 ? (
+              {metrics?.funnel?.steps && metrics.funnel.steps.length > 0 ? (
                 <div className="space-y-4">
-                  {metrics.funnel.steps.map((step) => (
+                  {metrics?.funnel?.steps?.map((step) => (
                     <div key={step.step} className="flex items-center justify-between p-4 border rounded-lg">
                       <div className="flex items-center space-x-4">
                         <BarChart3 className="h-5 w-5 text-muted-foreground" />
