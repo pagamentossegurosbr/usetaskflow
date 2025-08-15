@@ -1,54 +1,46 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
-import { prisma } from '@/lib/prisma';
+import { NextRequest, NextResponse } from "next/server"
+import { getServerSession } from "next-auth"
+import { authOptions } from "@/lib/auth"
 
-// Forçar renderização dinâmica
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    console.log('=== SUBSCRIPTION ROUTE DEBUG ===')
     
+    const session = await getServerSession(authOptions)
+    console.log('1. Sessão obtida:', session ? 'Sim' : 'Não')
+    
+    // Se não há sessão, retornar plano gratuito
     if (!session?.user?.email) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+      console.log('2. Usuário não autenticado, retornando plano gratuito')
+      return NextResponse.json({ 
+        plan: 'free',
+        status: 'active',
+        features: ['basic_tasks', 'basic_analytics']
+      })
     }
 
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
-      select: {
-        subscriptionPlan: true,
-        subscriptionStatus: true,
-        stripeCustomerId: true,
-        stripeSubscriptionId: true,
-        subscriptionStartedAt: true,
-        subscriptionExpiresAt: true,
-        maxLevel: true,
-      },
-    });
+    console.log('3. Usuário autenticado, retornando plano gratuito (sem tabela subscription)')
+    return NextResponse.json({
+      plan: 'free',
+      status: 'active',
+      features: ['basic_tasks', 'basic_analytics'],
+      currentPeriodEnd: null,
+      cancelAtPeriodEnd: false
+    })
 
-    if (!user) {
-      return NextResponse.json({ error: 'Usuário não encontrado' }, { status: 404 });
-    }
-
-    const subscriptionData = {
-      plan: user.subscriptionPlan,
-      status: user.subscriptionStatus,
-      maxLevel: user.maxLevel,
-      stripeCustomerId: user.stripeCustomerId,
-      stripeSubscriptionId: user.stripeSubscriptionId,
-      subscriptionStartedAt: user.subscriptionStartedAt,
-      subscriptionExpiresAt: user.subscriptionExpiresAt,
-    };
-
-    // Log removido para evitar spam no console
-
-    return NextResponse.json(subscriptionData);
   } catch (error) {
-    console.error('Error fetching subscription:', error);
+    console.error("❌ Erro na rota de assinatura:", error)
     return NextResponse.json(
-      { error: 'Erro interno do servidor' },
+      { 
+        plan: 'free',
+        status: 'active',
+        features: ['basic_tasks', 'basic_analytics'],
+        error: "Erro interno do servidor",
+        details: error instanceof Error ? error.message : 'Erro desconhecido'
+      },
       { status: 500 }
-    );
+    )
   }
 }
