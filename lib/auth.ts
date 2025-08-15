@@ -34,7 +34,11 @@ export const authOptions: NextAuthOptions = {
             email: true,
             name: true,
             password: true,
-            role: true
+            role: true,
+            level: true,
+            xp: true,
+            avatar: true,
+            isBanned: true
           }
         })
 
@@ -42,7 +46,9 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Usuário não encontrado")
         }
 
-        // Verificação de ban removida para schema simples
+        if (user.isBanned) {
+          throw new Error("Usuário banido do sistema")
+        }
 
         // Verificar se o usuário tem senha
         if (!user.password) {
@@ -56,7 +62,11 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Senha inválida")
         }
 
-        // Atualização de último login removida para schema simples
+        // Atualizar último login
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { lastLoginAt: new Date() }
+        })
 
         // Log do login (removido para schema minimalista)
         console.log('User login:', user.email);
@@ -65,8 +75,10 @@ export const authOptions: NextAuthOptions = {
           id: user.id,
           email: user.email,
           name: user.name,
-          image: null,
-          role: user.role as any
+          image: user.avatar,
+          role: user.role as any,
+          level: user.level,
+          xp: user.xp
         }
       }
     }),
