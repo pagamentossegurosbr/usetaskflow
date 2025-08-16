@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
+import { prisma } from "@/lib/prisma"
 
 export const dynamic = 'force-dynamic';
 
@@ -12,13 +13,63 @@ export async function GET(request: NextRequest) {
     console.log('1. Sessão obtida:', session ? 'Sim' : 'Não')
     
     // Se não há sessão, retornar array vazio
-    if (!session?.user?.email) {
+    if (!session?.user?.id) {
       console.log('2. Usuário não autenticado, retornando array vazio')
       return NextResponse.json({ tasks: [] })
     }
 
-    console.log('3. Usuário autenticado, retornando array vazio (sem tabela tasks)')
-    return NextResponse.json({ tasks: [] })
+    // Buscar tarefas do usuário. Tentamos retornar campos completos; se o DB
+    // não tiver alguma coluna opcional (schema parcial), fazemos fallback para básicos
+    let tasks
+    try {
+      tasks = await prisma.task.findMany({
+        where: { userId: session.user.id },
+        orderBy: { createdAt: 'desc' },
+        select: {
+          id: true,
+          title: true,
+          text: true,
+          completed: true,
+          priority: true,
+          userId: true,
+          createdAt: true,
+          updatedAt: true,
+          completedAt: true,
+          scheduledFor: true,
+          // Campos opcionais (podem não existir em DB sem migrações)
+          description: true,
+          category: true,
+          deadline: true,
+          estimatedTime: true,
+          tags: true,
+          reward: true,
+        }
+      })
+    } catch (err: any) {
+      if (err?.code === 'P2022') {
+        tasks = await prisma.task.findMany({
+          where: { userId: session.user.id },
+          orderBy: { createdAt: 'desc' },
+          select: {
+            id: true,
+            title: true,
+            text: true,
+            completed: true,
+            priority: true,
+            userId: true,
+            createdAt: true,
+            updatedAt: true,
+            completedAt: true,
+            scheduledFor: true,
+          }
+        })
+      } else {
+        throw err
+      }
+    }
+
+    console.log(`3. Encontradas ${tasks.length} tarefas para o usuário`)
+    return NextResponse.json({ tasks })
 
   } catch (error) {
     console.error("❌ Erro na rota de tarefas:", error)
@@ -40,7 +91,7 @@ export async function POST(request: NextRequest) {
     const session = await getServerSession(authOptions)
     console.log('1. Sessão obtida:', session ? 'Sim' : 'Não')
     
-    if (!session?.user?.email) {
+    if (!session?.user?.id) {
       console.log('2. Usuário não autenticado')
       return NextResponse.json({ error: "Não autenticado" }, { status: 401 })
     }
@@ -48,14 +99,72 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     console.log('3. Dados recebidos:', body)
 
-    console.log('4. Retornando tarefa simulada (sem tabela tasks)')
-    return NextResponse.json({
-      id: `task-${Date.now()}`,
-      title: body.title || 'Tarefa simulada',
-      completed: false,
-      createdAt: new Date().toISOString(),
-      userId: session.user.id
-    })
+    // Preparar dados base e opcionais
+    const baseData = {
+      title: body.title || body.text || 'Nova tarefa',
+      text: body.text || body.title || 'Nova tarefa',
+      userId: session.user.id,
+      priority: body.priority || false,
+    } as any
+    const optionalData = {
+      ...(body.description ? { description: body.description } : {}),
+      ...(body.category ? { category: body.category } : {}),
+      ...(body.deadline ? { deadline: new Date(body.deadline) } : {}),
+      ...(typeof body.estimatedTime === 'number' ? { estimatedTime: body.estimatedTime } : {}),
+      ...(Array.isArray(body.tags) ? { tags: body.tags } : {}),
+      ...(body.reward ? { reward: body.reward } : {}),
+      ...(body.scheduledFor ? { scheduledFor: new Date(body.scheduledFor) } : {}),
+    }
+
+    // Tentar com opcionais; se o banco não tiver colunas, refazer só com base
+    let task
+    try {
+      task = await prisma.task.create({
+        data: { ...baseData, ...optionalData },
+        select: {
+          id: true,
+          title: true,
+          text: true,
+          completed: true,
+          priority: true,
+          userId: true,
+          createdAt: true,
+          updatedAt: true,
+          completedAt: true,
+          scheduledFor: true,
+          description: true,
+          category: true,
+          deadline: true,
+          estimatedTime: true,
+          tags: true,
+          reward: true,
+        }
+      })
+    } catch (err: any) {
+      if (err?.code === 'P2022') {
+        // Coluna inexistente; criar apenas com campos base
+        task = await prisma.task.create({
+          data: { ...baseData },
+          select: {
+            id: true,
+            title: true,
+            text: true,
+            completed: true,
+            priority: true,
+            userId: true,
+            createdAt: true,
+            updatedAt: true,
+            completedAt: true,
+            scheduledFor: true,
+          }
+        })
+      } else {
+        throw err
+      }
+    }
+
+    console.log('4. Tarefa criada com sucesso:', task.id)
+    return NextResponse.json({ task })
 
   } catch (error) {
     console.error("❌ Erro ao criar tarefa:", error)
@@ -66,5 +175,142 @@ export async function POST(request: NextRequest) {
       },
       { status: 500 }
     )
+  }
+}
+
+export async function PUT(request: NextRequest) {
+  try {
+    console.log('=== UPDATE TASK DEBUG ===')
+    
+    const session = await getServerSession(authOptions)
+    console.log('1. Sessão obtida:', session ? 'Sim' : 'Não')
+    
+    if (!session?.user?.id) {
+      console.log('2. Usuário não autenticado')
+      return NextResponse.json({ error: "Não autenticado" }, { status: 401 })
+    }
+
+    const body = await request.json()
+    console.log('3. Dados recebidos:', body)
+
+    if (!body.id) {
+      return NextResponse.json({ error: "ID da tarefa é obrigatório" }, { status: 400 })
+    }
+
+    // Verificar se a tarefa pertence ao usuário sem ler colunas opcionais
+    const ownsTask = await prisma.task.count({
+      where: {
+        id: body.id,
+        userId: session.user.id,
+      },
+    })
+
+    if (ownsTask === 0) {
+      return NextResponse.json({ error: "Tarefa não encontrada" }, { status: 404 })
+    }
+
+    const updateOptional = {
+      ...(body.description ? { description: body.description } : {}),
+      ...(body.category ? { category: body.category } : {}),
+      ...(body.deadline ? { deadline: new Date(body.deadline) } : {}),
+      ...(typeof body.estimatedTime === 'number' ? { estimatedTime: body.estimatedTime } : {}),
+      ...(Array.isArray(body.tags) ? { tags: body.tags } : {}),
+      ...(body.reward ? { reward: body.reward } : {}),
+      ...(body.scheduledFor ? { scheduledFor: new Date(body.scheduledFor) } : {}),
+    }
+
+    const updateBase = {
+      ...(body.title || body.text ? { title: body.title || body.text } : {}),
+      ...(body.text || body.title ? { text: body.text || body.title } : {}),
+      ...(typeof body.completed === 'boolean' ? { completed: body.completed } : {}),
+      ...(typeof body.priority === 'boolean' ? { priority: body.priority } : {}),
+      ...(typeof body.completed === 'boolean' ? { completedAt: body.completed ? new Date() : null } : {}),
+    }
+
+    let updatedTask
+    try {
+      updatedTask = await prisma.task.update({
+        where: { id: body.id },
+        data: { ...updateBase, ...updateOptional },
+        select: {
+          id: true,
+          title: true,
+          text: true,
+          completed: true,
+          priority: true,
+          userId: true,
+          createdAt: true,
+          updatedAt: true,
+          completedAt: true,
+          scheduledFor: true,
+          description: true,
+          category: true,
+          deadline: true,
+          estimatedTime: true,
+          tags: true,
+          reward: true,
+        }
+      })
+    } catch (err: any) {
+      if (err?.code === 'P2022') {
+        updatedTask = await prisma.task.update({
+          where: { id: body.id },
+          data: { ...updateBase },
+          select: {
+            id: true,
+            title: true,
+            text: true,
+            completed: true,
+            priority: true,
+            userId: true,
+            createdAt: true,
+            updatedAt: true,
+            completedAt: true,
+            scheduledFor: true,
+          }
+        })
+      } else {
+        throw err
+      }
+    }
+
+    console.log('4. Tarefa atualizada com sucesso:', updatedTask.id)
+    return NextResponse.json({ task: updatedTask })
+
+  } catch (error) {
+    console.error("❌ Erro ao atualizar tarefa:", error)
+    return NextResponse.json(
+      { 
+        error: "Erro interno do servidor",
+        details: error instanceof Error ? error.message : 'Erro desconhecido'
+      },
+      { status: 500 }
+    )
+  }
+}
+
+// Suporte a DELETE ?id=...
+export async function DELETE(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Não autenticado" }, { status: 401 })
+    }
+
+    const { searchParams } = new URL(request.url)
+    const id = searchParams.get('id')
+    if (!id) {
+      return NextResponse.json({ error: 'ID é obrigatório' }, { status: 400 })
+    }
+
+    // Deleta sem ler colunas opcionais (evita P2022 se o schema do DB estiver parcial)
+    const result = await prisma.task.deleteMany({ where: { id, userId: session.user.id } })
+    if (result.count === 0) {
+      return NextResponse.json({ error: 'Tarefa não encontrada' }, { status: 404 })
+    }
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error('❌ Erro ao deletar tarefa:', error)
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { status: 500 })
   }
 }

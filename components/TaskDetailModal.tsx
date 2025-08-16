@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -133,28 +133,30 @@ export function TaskDetailModal({
   if (!task) return null;
 
   return (
-         <Dialog open={isOpen} onOpenChange={onClose} modal={true}>
-       <DialogContent className="max-w-lg max-h-[80vh] bg-gradient-to-br from-slate-900/95 via-slate-800/90 to-slate-900/95 backdrop-blur-xl border border-purple-500/30 shadow-2xl overflow-hidden">
-                 <DialogHeader className="space-y-3">
-           <div className="flex items-center justify-between">
-             <DialogTitle className="text-lg font-bold text-white flex items-center gap-2">
-               <Target className="h-4 w-4 text-purple-400" />
-               Detalhes da Tarefa
-             </DialogTitle>
-             <div className="flex items-center gap-3">
-               {!isEditing && (
-                 <Button
-                   onClick={() => setIsEditing(true)}
-                   variant="ghost"
-                   size="sm"
-                   className="p-2 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-purple-500/30"
-                 >
-                   <Edit3 className="h-4 w-4 text-purple-400" />
-                 </Button>
-               )}
-             </div>
-           </div>
-         </DialogHeader>
+          <Dialog open={isOpen} onOpenChange={onClose} modal={true}>
+        <DialogContent className="max-w-lg max-h-[80vh] bg-gradient-to-br from-slate-900/95 via-slate-800/90 to-slate-900/95 backdrop-blur-xl border border-purple-500/30 shadow-2xl overflow-hidden">
+                  <DialogHeader className="space-y-3">
+            <div className="flex items-center justify-between pr-10">
+              <DialogTitle className="text-lg font-bold text-white flex items-center gap-2">
+                <Target className="h-4 w-4 text-purple-400" />
+                Detalhes da Tarefa
+              </DialogTitle>
+              <div className="flex items-center gap-2">
+                {!isEditing && (
+                  <Button
+                    onClick={() => setIsEditing(true)}
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 p-0 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-purple-500/30 rounded-full"
+                    title="Editar"
+                  >
+                    <Edit3 className="h-4 w-4 text-purple-400" />
+                  </Button>
+                )}
+              </div>
+            </div>
+          </DialogHeader>
+          <DialogDescription className="sr-only">Informações detalhadas da tarefa e ações disponíveis</DialogDescription>
 
                  <div className="space-y-4 overflow-y-auto max-h-[calc(80vh-120px)] pr-2">
                      {/* Status da Tarefa */}
