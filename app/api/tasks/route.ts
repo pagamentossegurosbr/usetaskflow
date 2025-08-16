@@ -4,6 +4,17 @@ import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 
 export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
+function shouldFallbackToStateless(error: any): boolean {
+  const code = error?.code || error?.meta?.code;
+  if (!code) return false;
+  // Erros típicos de conexão/misconfiguração no Prisma em produção
+  return (
+    code.startsWith?.('P100') || // P1000..P1009 (conexão/credenciais)
+    code === 'P1013' // string de conexão inválida
+  );
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -63,6 +74,9 @@ export async function GET(request: NextRequest) {
             scheduledFor: true,
           }
         })
+      } else if (!process.env.DATABASE_URL || shouldFallbackToStateless(err)) {
+        // Fallback sem DB: retornar lista vazia para não quebrar a UI
+        return NextResponse.json({ tasks: [] })
       } else {
         throw err
       }
@@ -158,6 +172,22 @@ export async function POST(request: NextRequest) {
             scheduledFor: true,
           }
         })
+      } else if (!process.env.DATABASE_URL || shouldFallbackToStateless(err)) {
+        // Fallback sem DB: responder com tarefa simulada (UI salva no localStorage)
+        const now = new Date().toISOString()
+        const simulated = {
+          id: `task-${Date.now()}`,
+          title: baseData.title,
+          text: baseData.text,
+          completed: false,
+          priority: !!baseData.priority,
+          userId: session.user.id,
+          createdAt: now,
+          updatedAt: now,
+          completedAt: null,
+          scheduledFor: null,
+        }
+        return NextResponse.json({ task: simulated })
       } else {
         throw err
       }
@@ -269,6 +299,23 @@ export async function PUT(request: NextRequest) {
             scheduledFor: true,
           }
         })
+      } else if (!process.env.DATABASE_URL || shouldFallbackToStateless(err)) {
+        // Fallback sem DB: responder sucesso sem persistir para não quebrar a UX
+        return NextResponse.json({
+          task: {
+            id: body.id,
+            title: body.title || body.text || 'Tarefa',
+            text: body.text || body.title || 'Tarefa',
+            completed: !!body.completed,
+            priority: !!body.priority,
+            userId: session.user.id,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            completedAt: body.completed ? new Date().toISOString() : null,
+            scheduledFor: null,
+          },
+          warning: 'Sem conexão com DB em produção; atualização não foi persistida.'
+        })
       } else {
         throw err
       }
@@ -304,7 +351,16 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Deleta sem ler colunas opcionais (evita P2022 se o schema do DB estiver parcial)
-    const result = await prisma.task.deleteMany({ where: { id, userId: session.user.id } })
+    let result
+    try {
+      result = await prisma.task.deleteMany({ where: { id, userId: session.user.id } })
+    } catch (err: any) {
+      if (!process.env.DATABASE_URL || shouldFallbackToStateless(err)) {
+        // Fallback sem DB: responder 200 mesmo sem deletar no servidor
+        return NextResponse.json({ success: true, warning: 'Sem conexão com DB em produção; deleção não foi persistida.' })
+      }
+      throw err
+    }
     if (result.count === 0) {
       return NextResponse.json({ error: 'Tarefa não encontrada' }, { status: 404 })
     }
