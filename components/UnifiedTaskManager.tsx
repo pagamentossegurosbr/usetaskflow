@@ -160,8 +160,11 @@ export const UnifiedTaskManager = memo(function UnifiedTaskManager({
 
   // Organizar tarefas por prioridade
   const organizedTodos = useMemo(() => {
-    const pending = todos.filter(todo => !todo.completed);
-    const completed = todos.filter(todo => todo.completed);
+    // Filtrar todos com ID válido
+    const validTodos = todos.filter(todo => todo.id && todo.id !== 'undefined' && todo.id !== 'null');
+    
+    const pending = validTodos.filter(todo => !todo.completed);
+    const completed = validTodos.filter(todo => todo.completed);
     
     // Ordenar por prioridade: Alta > Média > Baixa
     const sortByPriority = (a: Todo, b: Todo) => {
@@ -285,6 +288,13 @@ export const UnifiedTaskManager = memo(function UnifiedTaskManager({
   }, [isPomodoroActive, pomodoroTime, playSuccessSound]);
 
   const handleToggleTodo = useCallback((id: string) => {
+    // Validar ID antes de prosseguir
+    if (!id || id === 'undefined' || id === 'null') {
+      console.error('handleToggleTodo - ID inválido:', id);
+      toast.error('ID da tarefa inválido');
+      return;
+    }
+
     if (isBlocked(id, 'toggle')) {
       playErrorSound();
       toast.error('Aguarde um momento antes de alterar esta tarefa');
@@ -297,43 +307,55 @@ export const UnifiedTaskManager = memo(function UnifiedTaskManager({
     const todo = todos.find(t => t.id === id);
     const isCompleting = todo && !todo.completed;
     
+    // Chamar onToggleTodo imediatamente
     onToggleTodo(id);
     playClickSound();
     
-    // Usar setTimeout para evitar setState durante render
+    // Mover toda a lógica de XP para dentro do setTimeout para evitar setState durante render
+    // Usar um delay maior para garantir que o render foi concluído
     setTimeout(() => {
-      // Adicionar ou remover XP baseado na ação
-      if (todo) {
-        const baseXP = 10; // XP base por tarefa
-        const priorityBonus = todo.priority ? 5 : 0; // Bônus para tarefas prioritárias
-        const totalXP = baseXP + priorityBonus;
-        
-        if (isCompleting) {
-          addXP(totalXP, todo.priority ? 'Tarefa prioritária completada!' : 'Tarefa completada!', todo.id);
+      // Verificar se ainda é seguro executar (evitar race conditions)
+      if (typeof window !== 'undefined') {
+        // Adicionar ou remover XP baseado na ação
+        if (todo) {
+          const baseXP = 10; // XP base por tarefa
+          const priorityBonus = todo.priority ? 5 : 0; // Bônus para tarefas prioritárias
+          const totalXP = baseXP + priorityBonus;
           
-          // Toast informativo detalhado
-          if (todo.priority) {
-            toast.success(`🎉 +${totalXP} XP! Tarefa prioritária completada! (${baseXP} + ${priorityBonus} bônus)`, {
-              description: 'Parabéns! Tarefas prioritárias dão mais XP!'
-            });
+          if (isCompleting) {
+            addXP(totalXP, todo.priority ? 'Tarefa prioritária completada!' : 'Tarefa completada!', todo.id);
+            
+            // Toast informativo detalhado
+            if (todo.priority) {
+              toast.success(`🎉 +${totalXP} XP! Tarefa prioritária completada! (${baseXP} + ${priorityBonus} bônus)`, {
+                description: 'Parabéns! Tarefas prioritárias dão mais XP!'
+              });
+            } else {
+              toast.success(`🎉 +${totalXP} XP! Tarefa completada!`, {
+                description: 'Continue assim! Cada tarefa te aproxima do próximo nível!'
+              });
+            }
           } else {
-            toast.success(`🎉 +${totalXP} XP! Tarefa completada!`, {
-              description: 'Continue assim! Cada tarefa te aproxima do próximo nível!'
+            addXP(-totalXP, 'XP removido - Tarefa desmarcada', todo.id);
+            
+            // Toast informativo para remoção de XP
+            toast.info(`📉 -${totalXP} XP removido - Tarefa desmarcada`, {
+              description: todo.priority ? 'Tarefa prioritária desmarcada' : 'Tarefa desmarcada'
             });
           }
-        } else {
-          addXP(-totalXP, 'XP removido - Tarefa desmarcada', todo.id);
-          
-          // Toast informativo para remoção de XP
-          toast.info(`📉 -${totalXP} XP removido - Tarefa desmarcada`, {
-            description: todo.priority ? 'Tarefa prioritária desmarcada' : 'Tarefa desmarcada'
-          });
         }
       }
-    }, 0);
+    }, 10); // Aumentar o delay para 10ms
   }, [isBlocked, recordToggle, onToggleTodo, todos, addXP]);
 
   const handleDeleteTodo = useCallback((id: string) => {
+    // Validar ID antes de prosseguir
+    if (!id || id === 'undefined' || id === 'null') {
+      console.error('handleDeleteTodo - ID inválido:', id);
+      toast.error('ID da tarefa inválido');
+      return;
+    }
+
     if (isBlocked(id, 'delete')) {
       playErrorSound();
       toast.error('Aguarde um momento antes de deletar esta tarefa');
@@ -350,10 +372,17 @@ export const UnifiedTaskManager = memo(function UnifiedTaskManager({
   }, [isBlocked, recordToggle, onDeleteTodo]);
 
   const handleEditTodo = useCallback((id: string) => {
+    // Validar ID antes de prosseguir
+    if (!id || id === 'undefined' || id === 'null') {
+      console.error('handleEditTodo - ID inválido:', id);
+      toast.error('ID da tarefa inválido');
+      return;
+    }
+
     const todo = todos.find(t => t.id === id);
     if (todo) {
       setEditingId(id);
-      setEditText(todo.text);
+      setEditText(todo.text || todo.title || '');
     }
   }, [todos]);
 
@@ -839,13 +868,18 @@ export const UnifiedTaskManager = memo(function UnifiedTaskManager({
                 </Badge>
               </div>
               <div className="space-y-3">
-                {pendingTodos.map((todo, index) => (
-                  <motion.div
-                    key={todo.id}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.5, delay: 0.3 + (index * 0.1) }}
-                  >
+                {pendingTodos
+                  .filter(todo => todo.id && todo.id !== 'undefined' && todo.id !== 'null' && todo.id !== '')
+                  .map((todo, index) => {
+                    // Garantir que o ID seja uma string válida
+                    const validId = String(todo.id || `temp-${index}-${Date.now()}`);
+                    return (
+                      <motion.div
+                        key={validId}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.5, delay: 0.3 + (index * 0.1) }}
+                      >
                     <div className="p-4 bg-white/5 border border-white/10 rounded-2xl hover:border-purple-500/30 transition-all duration-300 backdrop-blur-sm group">
                       <div className="flex items-start gap-3">
                         <button
@@ -878,8 +912,8 @@ export const UnifiedTaskManager = memo(function UnifiedTaskManager({
                             </div>
                           ) : (
                             <>
-                              <h4 className="font-medium text-foreground mb-1 truncate" title={todo.text}>
-                                {todo.text.length > 50 ? `${todo.text.substring(0, 50)}...` : todo.text}
+                              <h4 className="font-medium text-foreground mb-1 truncate" title={todo.text || todo.title || 'Tarefa sem título'}>
+                                {(todo.text || todo.title || 'Tarefa sem título').length > 50 ? `${(todo.text || todo.title || 'Tarefa sem título').substring(0, 50)}...` : (todo.text || todo.title || 'Tarefa sem título')}
                               </h4>
                               
                               {/* Campos opcionais da tarefa */}
@@ -889,7 +923,7 @@ export const UnifiedTaskManager = memo(function UnifiedTaskManager({
                                   {todo.description && (
                                     <p className="text-xs text-blue-300/80 flex items-center gap-1 line-clamp-2" title={todo.description}>
                                       <FileText className="h-3 w-3 flex-shrink-0" />
-                                      {todo.description.length > 60 ? `${todo.description.substring(0, 60)}...` : todo.description}
+                                      {(todo.description || '').length > 60 ? `${(todo.description || '').substring(0, 60)}...` : todo.description}
                                     </p>
                                   )}
                                   
@@ -906,6 +940,7 @@ export const UnifiedTaskManager = memo(function UnifiedTaskManager({
                                      <p className="text-xs text-orange-300/80 flex items-center gap-1">
                                        <CalendarIcon className="h-3 w-3" />
                                        Prazo: {(() => {
+                                         if (!todo.deadline) return 'Data não definida';
                                          const [year, month, day] = todo.deadline.split('-');
                                          return `${day}/${month}/${year}`;
                                        })()}
@@ -924,7 +959,7 @@ export const UnifiedTaskManager = memo(function UnifiedTaskManager({
                                   {todo.tags && todo.tags.length > 0 && (
                                     <div className="flex flex-wrap gap-1">
                                       {todo.tags.map((tag, tagIndex) => (
-                                        <span key={tagIndex} className="text-xs bg-purple-500/20 text-purple-300 px-1.5 py-0.5 rounded-md">
+                                        <span key={`${todo.id}-tag-${tagIndex}-${tag}`} className="text-xs bg-purple-500/20 text-purple-300 px-1.5 py-0.5 rounded-md">
                                           #{tag}
                                         </span>
                                       ))}
@@ -942,7 +977,7 @@ export const UnifiedTaskManager = memo(function UnifiedTaskManager({
                               )}
                               
                               <p className="text-sm text-muted-foreground mt-2">
-                                Criada: {new Date(todo.createdAt).toLocaleDateString('pt-BR')}
+                                Criada: {todo.createdAt ? new Date(todo.createdAt).toLocaleDateString('pt-BR') : 'Data não disponível'}
                               </p>
                             </>
                           )}
@@ -995,7 +1030,8 @@ export const UnifiedTaskManager = memo(function UnifiedTaskManager({
                       </div>
                     </div>
                   </motion.div>
-                ))}
+                );
+              })}
               </div>
             </Card>
           </motion.div>
@@ -1036,21 +1072,26 @@ export const UnifiedTaskManager = memo(function UnifiedTaskManager({
                     transition={{ duration: 0.3 }}
                     className="space-y-3"
                   >
-                    {completedTodos.map((todo, index) => (
-                      <motion.div
-                        key={todo.id}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.5, delay: index * 0.1 }}
-                      >
+                    {completedTodos
+                      .filter(todo => todo.id && todo.id !== 'undefined' && todo.id !== 'null' && todo.id !== '')
+                      .map((todo, index) => {
+                        // Garantir que o ID seja uma string válida
+                        const validId = String(todo.id || `temp-completed-${index}-${Date.now()}`);
+                        return (
+                          <motion.div
+                            key={validId}
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ duration: 0.5, delay: index * 0.1 }}
+                          >
                         <div className="p-4 bg-white/5 border border-green-500/20 rounded-2xl backdrop-blur-sm group">
                           <div className="flex items-start gap-3">
                             <div className="flex-shrink-0 p-2 rounded-lg bg-green-500/20 text-green-400 backdrop-blur-sm">
                               <CheckCircle className="h-4 w-4" />
                             </div>
                             <div className="flex-1 min-w-0">
-                              <h4 className="font-medium text-green-400 mb-1 truncate" title={todo.text}>
-                                {todo.text.length > 50 ? `${todo.text.substring(0, 50)}...` : todo.text}
+                              <h4 className="font-medium text-green-400 mb-1 truncate" title={todo.text || todo.title || 'Tarefa sem título'}>
+                                {(todo.text || todo.title || 'Tarefa sem título').length > 50 ? `${(todo.text || todo.title || 'Tarefa sem título').substring(0, 50)}...` : (todo.text || todo.title || 'Tarefa sem título')}
                               </h4>
                               
                               {/* Campos opcionais da tarefa concluída */}
@@ -1060,7 +1101,7 @@ export const UnifiedTaskManager = memo(function UnifiedTaskManager({
                                   {todo.description && (
                                     <p className="text-xs text-blue-300/60 flex items-center gap-1 line-clamp-2" title={todo.description}>
                                       <FileText className="h-3 w-3 flex-shrink-0" />
-                                      {todo.description.length > 60 ? `${todo.description.substring(0, 60)}...` : todo.description}
+                                      {(todo.description || '').length > 60 ? `${(todo.description || '').substring(0, 60)}...` : todo.description}
                                     </p>
                                   )}
                                   
@@ -1077,6 +1118,7 @@ export const UnifiedTaskManager = memo(function UnifiedTaskManager({
                                      <p className="text-xs text-orange-300/60 flex items-center gap-1">
                                        <CalendarIcon className="h-3 w-3" />
                                        Prazo: {(() => {
+                                         if (!todo.deadline) return 'Data não definida';
                                          const [year, month, day] = todo.deadline.split('-');
                                          return `${day}/${month}/${year}`;
                                        })()}
@@ -1095,7 +1137,7 @@ export const UnifiedTaskManager = memo(function UnifiedTaskManager({
                                   {todo.tags && todo.tags.length > 0 && (
                                     <div className="flex flex-wrap gap-1">
                                       {todo.tags.map((tag, tagIndex) => (
-                                        <span key={tagIndex} className="text-xs bg-purple-500/10 text-purple-300/60 px-1.5 py-0.5 rounded-md">
+                                        <span key={`${todo.id}-tag-${tagIndex}-${tag}`} className="text-xs bg-purple-500/10 text-purple-300/60 px-1.5 py-0.5 rounded-md">
                                           #{tag}
                                         </span>
                                       ))}
@@ -1113,7 +1155,7 @@ export const UnifiedTaskManager = memo(function UnifiedTaskManager({
                               )}
                               
                               <p className="text-sm text-muted-foreground mt-2">
-                                Criada: {new Date(todo.createdAt).toLocaleDateString('pt-BR')} • 
+                                Criada: {todo.createdAt ? new Date(todo.createdAt).toLocaleDateString('pt-BR') : 'Data não disponível'} • 
                                 Concluída: {todo.completedAt ? new Date(todo.completedAt).toLocaleDateString('pt-BR') : 'Agora'}
                               </p>
                             </div>
@@ -1141,7 +1183,8 @@ export const UnifiedTaskManager = memo(function UnifiedTaskManager({
                           </div>
                         </div>
                       </motion.div>
-                    ))}
+                    );
+                  })}
                   </motion.div>
                 )}
               </AnimatePresence>

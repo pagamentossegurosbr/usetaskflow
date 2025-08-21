@@ -123,6 +123,11 @@ export function useAutoSync(options: AutoSyncOptions = {}) {
       return;
     }
 
+    // DESABILITAR TEMPORARIAMENTE A SINCRONIZAÇÃO AUTOMÁTICA
+    // para evitar conflitos com as tarefas
+    console.log('🔄 Sincronização automática desabilitada temporariamente');
+    return;
+
     const startAutoSync = () => {
       if (syncTimeoutRef.current) {
         clearTimeout(syncTimeoutRef.current);

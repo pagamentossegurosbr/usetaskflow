@@ -136,12 +136,9 @@ interface CRMetrics {
       type: string;
       action: string;
       createdAt: string;
-      lead: {
-        id: string;
-        name: string | null;
-        email: string | null;
-        status: string;
-      };
+      leadName: string | null;
+      leadEmail: string | null;
+      leadStatus: string;
     }>;
   };
 }
@@ -202,12 +199,12 @@ export default function AdminCRM() {
 
       if (leadsRes.ok) {
         const leadsData = await leadsRes.json();
-        setLeads(leadsData.leads);
+        setLeads(leadsData.leads || []);
       }
 
       if (linksRes.ok) {
         const linksData = await linksRes.json();
-        setLinks(linksData.links);
+        setLinks(linksData.links || []);
       }
 
       if (metricsRes.ok) {
@@ -283,105 +280,38 @@ export default function AdminCRM() {
     }
   };
 
-  const copyLinkToClipboard = (code: string) => {
-    const link = `${window.location.origin}/invite/${code}`;
-    navigator.clipboard.writeText(link);
-    toast.success('Link copiado para a área de transferência');
-  };
-
-  const getStatusBadge = (status: string) => {
-    const statusConfig = {
-      NEW: { color: 'bg-blue-100 text-blue-800', label: 'Novo' },
-      CONTACTED: { color: 'bg-yellow-100 text-yellow-800', label: 'Contactado' },
-      QUALIFIED: { color: 'bg-green-100 text-green-800', label: 'Qualificado' },
-      CONVERTED: { color: 'bg-purple-100 text-purple-800', label: 'Convertido' },
-      LOST: { color: 'bg-red-100 text-red-800', label: 'Perdido' },
-      ARCHIVED: { color: 'bg-gray-100 text-gray-800', label: 'Arquivado' }
-    };
-
-    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.NEW;
-    return <Badge className={config.color}>{config.label}</Badge>;
-  };
-
-  const getSourceBadge = (source: string) => {
-    const sourceConfig = {
-      website: { color: 'bg-blue-100 text-blue-800', label: 'Website' },
-      invite_link: { color: 'bg-green-100 text-green-800', label: 'Link de Convite' },
-      organic: { color: 'bg-purple-100 text-purple-800', label: 'Orgânico' },
-      paid: { color: 'bg-orange-100 text-orange-800', label: 'Pago' },
-      manual: { color: 'bg-gray-100 text-gray-800', label: 'Manual' }
-    };
-
-    const config = sourceConfig[source as keyof typeof sourceConfig] || sourceConfig.manual;
-    return <Badge className={config.color}>{config.label}</Badge>;
-  };
-
-  const handleEditLead = (lead: Lead) => {
-    // Implementar edição de lead
-    toast.info('Funcionalidade de edição de lead será implementada em breve');
-  };
-
-  const handleDeleteLead = async (leadId: string) => {
-    try {
-      const response = await fetch(`/api/admin/leads?id=${leadId}`, {
-        method: 'DELETE',
-      });
-      
-      if (response.ok) {
-        toast.success('Lead deletado com sucesso');
-        fetchData(); // Recarregar dados
-      } else {
-        toast.error('Erro ao deletar lead');
-      }
-    } catch (error) {
-      toast.error('Erro ao deletar lead');
-    }
-  };
-
-  const handleEditLink = (link: InviteLink) => {
-    // Implementar edição de link
-    toast.info('Funcionalidade de edição de link será implementada em breve');
-  };
-
-  const handleDeleteLink = async (linkId: string) => {
-    try {
-      const response = await fetch(`/api/admin/invite-links?id=${linkId}`, {
-        method: 'DELETE',
-      });
-      
-      if (response.ok) {
-        toast.success('Link deletado com sucesso');
-        fetchData(); // Recarregar dados
-      } else {
-        toast.error('Erro ao deletar link');
-      }
-    } catch (error) {
-      toast.error('Erro ao deletar link');
-    }
-  };
+  // Função para filtrar leads
+  const filteredLeads = leads.filter(lead => {
+    const matchesSearch = !searchTerm || 
+      (lead.name && lead.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (lead.email && lead.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (lead.phone && lead.phone.includes(searchTerm));
+    
+    const matchesStatus = !statusFilter || statusFilter === 'all' || lead.status === statusFilter;
+    const matchesSource = !sourceFilter || sourceFilter === 'all' || lead.source === sourceFilter;
+    
+    return matchesSearch && matchesStatus && matchesSource;
+  });
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
+      <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p>Carregando dados do CRM...</p>
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Carregando dados do CRM...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+    <div className="container mx-auto p-6 space-y-6">
+      <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold">CRM & Métricas</h1>
-          <p className="text-muted-foreground">
-            Gerencie leads, links de convite e acompanhe métricas de conversão
-          </p>
+          <h1 className="text-3xl font-bold">CRM - Gestão de Leads</h1>
+          <p className="text-muted-foreground">Gerencie seus leads e campanhas</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex space-x-2">
           <Button onClick={() => setShowLeadModal(true)}>
             <Plus className="h-4 w-4 mr-2" />
             Novo Lead
@@ -393,103 +323,68 @@ export default function AdminCRM() {
         </div>
       </div>
 
-      {/* Métricas Rápidas */}
-      {metrics && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total de Leads</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{metrics?.leads?.total || 0}</div>
-              <p className="text-xs text-muted-foreground">
-                +{metrics?.leads?.new || 0} novos nos últimos {metrics?.period?.days || 30} dias
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Taxa de Conversão</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{metrics?.leads?.conversionRate || 0}%</div>
-              <p className="text-xs text-muted-foreground">
-                {metrics?.leads?.converted || 0} convertidos
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Links Ativos</CardTitle>
-              <Link className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{metrics?.links?.active || 0}</div>
-              <p className="text-xs text-muted-foreground">
-                {metrics?.links?.totalClicks || 0} cliques totais
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Score Médio</CardTitle>
-              <Target className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{metrics?.leads?.averageScore || 0}</div>
-              <p className="text-xs text-muted-foreground">
-                Engajamento dos leads
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="overview">Visão Geral</TabsTrigger>
           <TabsTrigger value="leads">Leads</TabsTrigger>
           <TabsTrigger value="links">Links de Convite</TabsTrigger>
-          <TabsTrigger value="funnel">Funil</TabsTrigger>
+          <TabsTrigger value="analytics">Analytics</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="overview" className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Gráfico de Leads por Status */}
+        <TabsContent value="overview" className="space-y-6">
+          {/* Cards de Métricas */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <Card>
-              <CardHeader>
-                <CardTitle>Leads por Status</CardTitle>
-                <CardDescription>Distribuição dos leads por status atual</CardDescription>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total de Leads</CardTitle>
+                <Users className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                {metrics?.leads?.byStatus?.map((item) => (
-                  <div key={item.status || 'unknown'} className="flex items-center justify-between py-2">
-                    <span className="text-sm">{getStatusBadge(item.status || 'unknown')}</span>
-                    <span className="font-medium">{item.count || 0}</span>
-                  </div>
-                ))}
+                <div className="text-2xl font-bold">{metrics?.leads.total || 0}</div>
+                <p className="text-xs text-muted-foreground">
+                  +{metrics?.leads.new || 0} novos este período
+                </p>
               </CardContent>
             </Card>
 
-            {/* Gráfico de Leads por Fonte */}
             <Card>
-              <CardHeader>
-                <CardTitle>Leads por Fonte</CardTitle>
-                <CardDescription>Origem dos leads</CardDescription>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Taxa de Conversão</CardTitle>
+                <TrendingUp className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                {metrics?.leads?.bySource?.map((item) => (
-                  <div key={item.source || 'unknown'} className="flex items-center justify-between py-2">
-                    <span className="text-sm">{getSourceBadge(item.source || 'unknown')}</span>
-                    <span className="font-medium">{item.count || 0}</span>
-                  </div>
-                ))}
+                <div className="text-2xl font-bold">
+                  {metrics?.leads?.conversionRate ? `${(metrics.leads?.conversionRate * 100).toFixed(1)}%` : '0%'}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {metrics?.leads?.converted || 0} convertidos
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Links Ativos</CardTitle>
+                <Link className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{metrics?.links?.active || 0}</div>
+                <p className="text-xs text-muted-foreground">
+                  {metrics?.links?.totalClicks || 0} cliques totais
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Score Médio</CardTitle>
+                <Target className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{metrics?.leads?.averageScore?.toFixed(1) || '0.0'}</div>
+                <p className="text-xs text-muted-foreground">
+                  Qualidade dos leads
+                </p>
               </CardContent>
             </Card>
           </div>
@@ -502,24 +397,28 @@ export default function AdminCRM() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {metrics?.activities.recent.map((activity) => (
+                {metrics?.activities?.recent?.map((activity) => (
                   <div key={activity.id} className="flex items-center justify-between p-3 border rounded-lg">
                     <div className="flex items-center space-x-3">
                       <Activity className="h-4 w-4 text-muted-foreground" />
                       <div>
                         <p className="text-sm font-medium">
-                          {activity.lead.name || activity.lead.email}
+                          {activity.leadName || activity.leadEmail || 'Lead desconhecido'}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          {activity.action}
+                          {activity.action || 'Atividade'}
                         </p>
                       </div>
                     </div>
                     <span className="text-xs text-muted-foreground">
-                      {new Date(activity.createdAt).toLocaleDateString()}
+                      {activity.createdAt ? new Date(activity.createdAt).toLocaleDateString() : 'Data desconhecida'}
                     </span>
                   </div>
-                ))}
+                )) || (
+                  <div className="text-center py-8 text-muted-foreground">
+                    Nenhuma atividade recente
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -596,25 +495,32 @@ export default function AdminCRM() {
           {/* Lista de Leads */}
           <Card>
             <CardHeader>
-              <CardTitle>Leads ({leads.length})</CardTitle>
+              <CardTitle>Leads ({filteredLeads.length})</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {leads.map((lead) => (
+                {filteredLeads.map((lead) => (
                   <div key={lead.id} className="flex items-center justify-between p-4 border rounded-lg">
                     <div className="flex items-center space-x-4">
                       <div>
-                        <p className="font-medium">{lead.name || 'Sem nome'}</p>
-                        <p className="text-sm text-muted-foreground">{lead.email}</p>
-                        {lead.phone && (
-                          <p className="text-sm text-muted-foreground">{lead.phone}</p>
-                        )}
+                        <h3 className="font-medium">
+                          {lead.name || lead.email || 'Lead sem nome'}
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          {lead.email} {lead.phone && `• ${lead.phone}`}
+                        </p>
+                        <div className="flex items-center space-x-2 mt-1">
+                          <Badge variant="outline">{lead.source}</Badge>
+                          <Badge variant={lead.status === 'CONVERTED' ? 'default' : 'secondary'}>
+                            {lead.status}
+                          </Badge>
+                          {lead.score > 0 && (
+                            <Badge variant="outline">Score: {lead.score}</Badge>
+                          )}
+                        </div>
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">
-                      {getStatusBadge(lead.status)}
-                      {getSourceBadge(lead.source)}
-                      <Badge variant="outline">Score: {lead.score}</Badge>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" size="sm">
@@ -622,19 +528,28 @@ export default function AdminCRM() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleEditLead(lead)}>
+                          <DropdownMenuItem onClick={() => setEditingLead(lead)}>
                             <Edit className="h-4 w-4 mr-2" />
                             Editar
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleDeleteLead(lead.id)}>
+                          <DropdownMenuItem>
+                            <Eye className="h-4 w-4 mr-2" />
+                            Ver Detalhes
+                          </DropdownMenuItem>
+                          <DropdownMenuItem className="text-destructive">
                             <Trash2 className="h-4 w-4 mr-2" />
-                            Deletar
+                            Excluir
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
                   </div>
                 ))}
+                {filteredLeads.length === 0 && (
+                  <div className="text-center py-8 text-muted-foreground">
+                    Nenhum lead encontrado
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -652,11 +567,13 @@ export default function AdminCRM() {
                   <div key={link.id} className="flex items-center justify-between p-4 border rounded-lg">
                     <div className="flex items-center space-x-4">
                       <div>
-                        <p className="font-medium">{link.name}</p>
-                        <p className="text-sm text-muted-foreground">{link.description}</p>
+                        <h3 className="font-medium">{link.name}</h3>
+                        <p className="text-sm text-muted-foreground">
+                          {link.description || 'Sem descrição'}
+                        </p>
                         <div className="flex items-center space-x-2 mt-1">
                           <Badge variant="outline">{link.type}</Badge>
-                          <Badge variant={link.isActive ? "default" : "secondary"}>
+                          <Badge variant={link.isActive ? 'default' : 'secondary'}>
                             {link.isActive ? 'Ativo' : 'Inativo'}
                           </Badge>
                           <Badge variant="outline">
@@ -667,14 +584,15 @@ export default function AdminCRM() {
                     </div>
                     <div className="flex items-center space-x-2">
                       <Button
-                        variant="ghost"
+                        variant="outline"
                         size="sm"
-                        onClick={() => copyLinkToClipboard(link.code)}
+                        onClick={() => {
+                          navigator.clipboard.writeText(`${window.location.origin}/invite/${link.code}`);
+                          toast.success('Link copiado!');
+                        }}
                       >
-                        <Copy className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="sm">
-                        <ExternalLink className="h-4 w-4" />
+                        <Copy className="h-4 w-4 mr-2" />
+                        Copiar
                       </Button>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -683,69 +601,51 @@ export default function AdminCRM() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleEditLink(link)}>
+                          <DropdownMenuItem onClick={() => setEditingLink(link)}>
                             <Edit className="h-4 w-4 mr-2" />
                             Editar
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleDeleteLink(link.id)}>
+                          <DropdownMenuItem>
+                            <ExternalLink className="h-4 w-4 mr-2" />
+                            Ver Estatísticas
+                          </DropdownMenuItem>
+                          <DropdownMenuItem className="text-destructive">
                             <Trash2 className="h-4 w-4 mr-2" />
-                            Deletar
+                            Excluir
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
                   </div>
                 ))}
+                {links.length === 0 && (
+                  <div className="text-center py-8 text-muted-foreground">
+                    Nenhum link de convite encontrado
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="funnel" className="space-y-4">
-          {/* Funil de Conversão */}
+        <TabsContent value="analytics" className="space-y-6">
+          {/* Analytics Placeholder */}
           <Card>
             <CardHeader>
-              <CardTitle>Funil de Conversão</CardTitle>
-              <CardDescription>Análise dos passos do funil</CardDescription>
+              <CardTitle>Analytics</CardTitle>
+              <CardDescription>Gráficos e análises detalhadas</CardDescription>
             </CardHeader>
             <CardContent>
-              {metrics?.funnel?.steps && metrics.funnel.steps.length > 0 ? (
-                <div className="space-y-4">
-                  {metrics?.funnel?.steps?.map((step) => (
-                    <div key={step.step} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div className="flex items-center space-x-4">
-                        <BarChart3 className="h-5 w-5 text-muted-foreground" />
-                        <div>
-                          <p className="font-medium">{step.step}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {step.completed || 0} de {step.total || 0} completaram
-                          </p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-medium">{step.completionRate || 0}%</p>
-                        <p className="text-sm text-muted-foreground">
-                          {step.avgTime || 0} min em média
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <BarChart3 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-muted-foreground">Nenhum dado do funil disponível</p>
-                  <p className="text-sm text-muted-foreground mt-2">
-                    Os dados do funil aparecerão quando houver atividades de onboarding registradas
-                  </p>
-                </div>
-              )}
+              <div className="text-center py-8 text-muted-foreground">
+                <BarChart3 className="h-12 w-12 mx-auto mb-4" />
+                <p>Analytics em desenvolvimento</p>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
 
-      {/* Modal de Criar/Editar Lead */}
+      {/* Modal de Lead */}
       <Dialog open={showLeadModal} onOpenChange={setShowLeadModal}>
         <DialogContent>
           <DialogHeader>
@@ -755,103 +655,87 @@ export default function AdminCRM() {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="name">Nome</Label>
-                <Input
-                  id="name"
-                  value={leadForm.name}
-                  onChange={(e) => setLeadForm({ ...leadForm, name: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={leadForm.email}
-                  onChange={(e) => setLeadForm({ ...leadForm, email: e.target.value })}
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="phone">Telefone</Label>
-                <Input
-                  id="phone"
-                  value={leadForm.phone}
-                  onChange={(e) => setLeadForm({ ...leadForm, phone: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label htmlFor="source">Fonte</Label>
-                <Select value={leadForm.source} onValueChange={(value) => setLeadForm({ ...leadForm, source: value })}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="website">Website</SelectItem>
-                    <SelectItem value="invite_link">Link de Convite</SelectItem>
-                    <SelectItem value="organic">Orgânico</SelectItem>
-                    <SelectItem value="paid">Pago</SelectItem>
-                    <SelectItem value="manual">Manual</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+            <div>
+              <Label htmlFor="name">Nome</Label>
+              <Input
+                id="name"
+                value={leadForm.name}
+                onChange={(e) => setLeadForm({...leadForm, name: e.target.value})}
+                placeholder="Nome do lead"
+              />
             </div>
             <div>
-              <Label htmlFor="campaign">Campanha</Label>
+              <Label htmlFor="email">Email</Label>
               <Input
-                id="campaign"
-                value={leadForm.campaign}
-                onChange={(e) => setLeadForm({ ...leadForm, campaign: e.target.value })}
+                id="email"
+                type="email"
+                value={leadForm.email}
+                onChange={(e) => setLeadForm({...leadForm, email: e.target.value})}
+                placeholder="email@exemplo.com"
               />
+            </div>
+            <div>
+              <Label htmlFor="phone">Telefone</Label>
+              <Input
+                id="phone"
+                value={leadForm.phone}
+                onChange={(e) => setLeadForm({...leadForm, phone: e.target.value})}
+                placeholder="(11) 99999-9999"
+              />
+            </div>
+            <div>
+              <Label htmlFor="source">Fonte</Label>
+              <Select value={leadForm.source} onValueChange={(value) => setLeadForm({...leadForm, source: value})}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="website">Website</SelectItem>
+                  <SelectItem value="invite_link">Link de Convite</SelectItem>
+                  <SelectItem value="organic">Orgânico</SelectItem>
+                  <SelectItem value="paid">Pago</SelectItem>
+                  <SelectItem value="manual">Manual</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <Label htmlFor="notes">Observações</Label>
               <Textarea
                 id="notes"
                 value={leadForm.notes}
-                onChange={(e) => setLeadForm({ ...leadForm, notes: e.target.value })}
+                onChange={(e) => setLeadForm({...leadForm, notes: e.target.value})}
+                placeholder="Observações sobre o lead"
               />
             </div>
-            <div>
-              <Label htmlFor="tags">Tags</Label>
-              <Input
-                id="tags"
-                placeholder="tag1, tag2, tag3"
-                value={leadForm.tags}
-                onChange={(e) => setLeadForm({ ...leadForm, tags: e.target.value })}
-              />
-            </div>
-            <div className="flex justify-end space-x-2">
-              <Button variant="outline" onClick={() => setShowLeadModal(false)}>
-                Cancelar
-              </Button>
-              <Button onClick={handleCreateLead}>
-                Criar Lead
-              </Button>
-            </div>
+          </div>
+          <div className="flex justify-end space-x-2">
+            <Button variant="outline" onClick={() => setShowLeadModal(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleCreateLead}>
+              Criar Lead
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* Modal de Criar/Editar Link */}
+      {/* Modal de Link */}
       <Dialog open={showLinkModal} onOpenChange={setShowLinkModal}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Novo Link de Convite</DialogTitle>
             <DialogDescription>
-              Crie um novo link de convite para rastrear conversões
+              Crie um novo link de convite para capturar leads
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label htmlFor="linkName">Nome do Link</Label>
+              <Label htmlFor="linkName">Nome</Label>
               <Input
                 id="linkName"
                 value={linkForm.name}
-                onChange={(e) => setLinkForm({ ...linkForm, name: e.target.value })}
+                onChange={(e) => setLinkForm({...linkForm, name: e.target.value})}
+                placeholder="Nome do link"
               />
             </div>
             <div>
@@ -859,63 +743,43 @@ export default function AdminCRM() {
               <Textarea
                 id="linkDescription"
                 value={linkForm.description}
-                onChange={(e) => setLinkForm({ ...linkForm, description: e.target.value })}
+                onChange={(e) => setLinkForm({...linkForm, description: e.target.value})}
+                placeholder="Descrição do link"
               />
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="linkType">Tipo</Label>
-                <Select value={linkForm.type} onValueChange={(value) => setLinkForm({ ...linkForm, type: value })}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="GENERAL">Geral</SelectItem>
-                    <SelectItem value="PARTNER">Parceiro</SelectItem>
-                    <SelectItem value="AFFILIATE">Afiliado</SelectItem>
-                    <SelectItem value="REFERRAL">Referência</SelectItem>
-                    <SelectItem value="CAMPAIGN">Campanha</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="linkCampaign">Campanha</Label>
-                <Input
-                  id="linkCampaign"
-                  value={linkForm.campaign}
-                  onChange={(e) => setLinkForm({ ...linkForm, campaign: e.target.value })}
-                />
-              </div>
+            <div>
+              <Label htmlFor="linkType">Tipo</Label>
+              <Select value={linkForm.type} onValueChange={(value) => setLinkForm({...linkForm, type: value})}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="GENERAL">Geral</SelectItem>
+                  <SelectItem value="PARTNER">Parceiro</SelectItem>
+                  <SelectItem value="AFFILIATE">Afiliado</SelectItem>
+                  <SelectItem value="REFERRAL">Referência</SelectItem>
+                  <SelectItem value="CAMPAIGN">Campanha</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="maxUses">Limite de Usos</Label>
-                <Input
-                  id="maxUses"
-                  type="number"
-                  placeholder="Ilimitado"
-                  value={linkForm.maxUses}
-                  onChange={(e) => setLinkForm({ ...linkForm, maxUses: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label htmlFor="expiresAt">Data de Expiração</Label>
-                <Input
-                  id="expiresAt"
-                  type="datetime-local"
-                  value={linkForm.expiresAt}
-                  onChange={(e) => setLinkForm({ ...linkForm, expiresAt: e.target.value })}
-                />
-              </div>
+            <div>
+              <Label htmlFor="maxUses">Máximo de Usos</Label>
+              <Input
+                id="maxUses"
+                type="number"
+                value={linkForm.maxUses}
+                onChange={(e) => setLinkForm({...linkForm, maxUses: e.target.value})}
+                placeholder="Ilimitado (deixe vazio)"
+              />
             </div>
-            <div className="flex justify-end space-x-2">
-              <Button variant="outline" onClick={() => setShowLinkModal(false)}>
-                Cancelar
-              </Button>
-              <Button onClick={handleCreateLink}>
-                Criar Link
-              </Button>
-            </div>
+          </div>
+          <div className="flex justify-end space-x-2">
+            <Button variant="outline" onClick={() => setShowLinkModal(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleCreateLink}>
+              Criar Link
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

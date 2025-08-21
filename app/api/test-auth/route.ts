@@ -1,94 +1,62 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
-import bcrypt from 'bcryptjs'
+import { NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptionsFixed } from '@/lib/auth-fixed'
 
-export async function POST(request: NextRequest) {
+export async function GET() {
   try {
-    console.log('=== TESTE DE AUTENTICAÇÃO ===')
+    console.log("🧪 TESTE DE AUTENTICAÇÃO")
     
-    const body = await request.json()
-    console.log('1. Dados recebidos:', { email: body.email })
-    
-    // Teste 1: Verificar se usuário existe
-    console.log('2. Verificando usuário...')
-    const user = await prisma.user.findUnique({
-      where: { email: body.email },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        password: true,
-        role: true,
-        level: true,
-        xp: true,
-        isBanned: true,
-        isActive: true
-      }
-    })
-    
-    if (!user) {
-      console.log('❌ Usuário não encontrado')
-      return NextResponse.json({ error: 'Usuário não encontrado' }, { status: 404 })
+    // Verificar variáveis de ambiente críticas
+    const criticalEnvVars = {
+      NEXTAUTH_URL: process.env.NEXTAUTH_URL,
+      NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET ? 'CONFIGURADO' : 'NÃO CONFIGURADO',
+      DATABASE_URL: process.env.DATABASE_URL ? 'CONFIGURADO' : 'NÃO CONFIGURADO',
     }
     
-    console.log('✅ Usuário encontrado:', { id: user.id, email: user.email, role: user.role })
+    console.log("Variáveis críticas:", criticalEnvVars)
     
-    // Teste 2: Verificar se está banido
-    if (user.isBanned) {
-      console.log('❌ Usuário banido')
-      return NextResponse.json({ error: 'Usuário banido' }, { status: 403 })
+    // Testar conexão com banco
+    let dbConnection = 'NÃO TESTADO'
+    try {
+      const { prisma } = await import('@/lib/prisma')
+      await prisma.$connect()
+      dbConnection = 'CONECTADO'
+      await prisma.$disconnect()
+    } catch (error) {
+      dbConnection = 'ERRO: ' + (error instanceof Error ? error.message : 'Desconhecido')
     }
     
-    // Teste 3: Verificar se está ativo
-    if (!user.isActive) {
-      console.log('❌ Usuário inativo')
-      return NextResponse.json({ error: 'Usuário inativo' }, { status: 403 })
+    // Tentar obter sessão
+    let session = null
+    try {
+      session = await getServerSession(authOptionsFixed)
+      console.log("Sessão obtida:", session ? 'SIM' : 'NÃO')
+    } catch (error) {
+      console.error("Erro ao obter sessão:", error)
     }
     
-    // Teste 4: Verificar senha
-    console.log('3. Verificando senha...')
-    if (!user.password) {
-      console.log('❌ Usuário sem senha (OAuth)')
-      return NextResponse.json({ error: 'Usuário sem senha' }, { status: 400 })
-    }
-    
-    const isValidPassword = await bcrypt.compare(body.password, user.password)
-    if (!isValidPassword) {
-      console.log('❌ Senha inválida')
-      return NextResponse.json({ error: 'Senha inválida' }, { status: 401 })
-    }
-    
-    console.log('✅ Senha válida')
-    
-    // Teste 5: Atualizar último login
-    console.log('4. Atualizando último login...')
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { lastLoginAt: new Date() }
-    })
-    console.log('✅ Último login atualizado')
-    
-    // Retornar dados do usuário
-    const userData = {
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      role: user.role,
-      level: user.level,
-      xp: user.xp
-    }
-    
-    console.log('✅ Autenticação bem-sucedida:', userData)
     return NextResponse.json({
-      message: 'Autenticação bem-sucedida',
-      user: userData
+      status: 'success',
+      message: 'Teste de autenticação executado',
+      environment: criticalEnvVars,
+      database: dbConnection,
+      session: session ? {
+        user: {
+          id: session.user?.id,
+          email: session.user?.email,
+          name: session.user?.name,
+          role: session.user?.role
+        }
+      } : null,
+      timestamp: new Date().toISOString()
     })
     
   } catch (error) {
-    console.error('❌ Erro no teste de autenticação:', error)
+    console.error("❌ Erro no teste de autenticação:", error)
     return NextResponse.json({
-      error: 'Erro interno',
-      details: error instanceof Error ? error.message : 'Erro desconhecido'
+      status: 'error',
+      message: error instanceof Error ? error.message : 'Erro desconhecido',
+      timestamp: new Date().toISOString()
     }, { status: 500 })
   }
 }

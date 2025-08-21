@@ -593,6 +593,16 @@ export function useProductivityLevel() {
         });
       }
 
+      // Disparar evento para notificar outros componentes sobre a mudança de XP
+      window.dispatchEvent(new CustomEvent('xp-updated', {
+        detail: { 
+          newStats,
+          previousStats: prevStats,
+          xpGained: amount,
+          wasLevelUp
+        }
+      }));
+
       return newStats;
     });
 

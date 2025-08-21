@@ -44,11 +44,7 @@ export function useSupportConfig() {
         (data.lastModified && data.lastModified !== config.lastModified);
 
       if (hasChanges) {
-        // Log reduzido para melhorar performance
-        if (process.env.NODE_ENV === 'development') {
-          console.log('useSupportConfig: Mudanças detectadas');
-        }
-
+        // Log removido para evitar spam no console
         setConfig(data);
         setLastUpdate(Date.now());
 
@@ -68,10 +64,10 @@ export function useSupportConfig() {
     // Carregamento inicial
     fetchSupportConfig(true);
 
-    // Configurar polling a cada 5 minutos (reduzido de 30 segundos)
+    // Configurar polling a cada 30 minutos (aumentado drasticamente)
     pollingIntervalRef.current = setInterval(() => {
       fetchSupportConfig();
-    }, 300000);
+    }, 1800000); // 30 minutos
 
     // Cleanup
     return () => {

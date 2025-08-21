@@ -16,10 +16,10 @@ export function useSubscription() {
   );
   const [loading, setLoading] = useState(false);
 
-  // Sincronizar com o servidor quando a sessão estiver disponível (otimizado)
+  // Sincronizar com o servidor quando a sessão estiver disponível
   useEffect(() => {
-    if (session?.user?.email && !subscription.lastSync) {
-      // Só sincronizar se não foi sincronizado recentemente
+    if (session?.user?.email) {
+      // Sempre sincronizar quando a sessão estiver disponível
       syncWithServer();
     }
   }, [session?.user?.email]);
@@ -35,6 +35,10 @@ export function useSubscription() {
       setLoading(false);
     }
   }, []);
+
+  const refreshSubscription = useCallback(async () => {
+    await syncWithServer();
+  }, [syncWithServer]);
 
   const updateSubscription = useCallback((newSubscription: Partial<UserSubscription>) => {
     const updated = { ...subscription, ...newSubscription };
@@ -131,6 +135,7 @@ export function useSubscription() {
 
     // Ações
     syncWithServer,
+    refreshSubscription,
     updateSubscription,
     upgradeSubscription,
     cancelSubscription,

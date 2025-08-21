@@ -1,59 +1,50 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptionsFixed } from '@/lib/auth-fixed';
 import { prisma } from '@/lib/prisma';
 
-// Interface para a configuração de suporte
-interface SupportConfig {
-  whatsappNumber: string;
-  supportEmail: string;
-  supportEnabled: boolean;
-  lastModified: number;
-}
-
-// Configuração padrão
-const defaultSupportConfig: SupportConfig = {
-  whatsappNumber: '+55 11 98900-2458',
-  supportEmail: 'suporte@taskflow.com',
-  supportEnabled: false,
-  lastModified: Date.now()
-};
-
-// Função para obter configuração do banco de dados
-async function getSupportConfigFromDB(): Promise<SupportConfig> {
+async function getSupportConfigFromDB() {
   try {
-    const setting = await prisma.settings.findUnique({
-      where: { key: 'support_config' }
+    const settings = await prisma.$queryRaw`
+      SELECT key, value
+      FROM settings
+      WHERE key IN ('support_email', 'support_phone', 'support_hours')
+    `;
+    
+    const config: any = {};
+    settings.forEach((setting: any) => {
+      config[setting.key] = setting.value;
     });
-
-    if (setting && setting.value) {
-      const config = setting.value as SupportConfig;
-      return {
-        ...defaultSupportConfig,
-        ...config,
-        lastModified: config.lastModified || Date.now()
-      };
-    }
-
-    // Se não existe, retornar valores padrão
-    return defaultSupportConfig;
+    
+    return {
+      email: config.support_email || 'suporte@taskflow.com',
+      phone: config.support_phone || '(11) 99999-9999',
+      hours: config.support_hours || 'Segunda a Sexta, 9h às 18h'
+    };
   } catch (error) {
     console.error('Erro ao buscar configuração de suporte:', error);
-    return defaultSupportConfig;
+    return {
+      email: 'suporte@taskflow.com',
+      phone: '(11) 99999-9999',
+      hours: 'Segunda a Sexta, 9h às 18h'
+    };
   }
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const session = await getServerSession(authOptionsFixed);
+    
+    // Configuração de suporte é pública, não precisa de autenticação
     const config = await getSupportConfigFromDB();
     
-    // Adicionar headers para evitar cache
-    const response = NextResponse.json(config);
-    response.headers.set('Cache-Control', 'no-cache, no-store, must-revalidate');
-    response.headers.set('Pragma', 'no-cache');
-    response.headers.set('Expires', '0');
-    
-    return response;
+    return NextResponse.json(config);
   } catch (error) {
-    console.error('Erro no GET /api/support-config:', error);
-    return NextResponse.json({ error: 'Erro interno do servidor' }, { status: 500 });
+    console.error('Erro ao buscar configuração de suporte:', error);
+    return NextResponse.json({
+      email: 'suporte@taskflow.com',
+      phone: '(11) 99999-9999',
+      hours: 'Segunda a Sexta, 9h às 18h'
+    });
   }
 }

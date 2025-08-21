@@ -9,7 +9,7 @@ interface UseUpgradeModalOptions {
 
 export function useUpgradeModal(options: UseUpgradeModalOptions = {}) {
   const [isOpen, setIsOpen] = useState(false);
-  const [targetPlan, setTargetPlan] = useState<'aspirante' | 'executor' | null>(null);
+  const [targetPlan, setTargetPlan] = useState<'aspirante' | 'executor' | undefined>(undefined);
   const [blockedFeature, setBlockedFeature] = useState<string | null>(null);
   const { subscription } = useSubscription();
 
@@ -21,7 +21,7 @@ export function useUpgradeModal(options: UseUpgradeModalOptions = {}) {
 
   const closeUpgradeModal = useCallback(() => {
     setIsOpen(false);
-    setTargetPlan(null);
+    setTargetPlan(undefined);
     setBlockedFeature(null);
   }, []);
 

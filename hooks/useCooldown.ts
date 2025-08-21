@@ -138,8 +138,12 @@ export function useCooldown(): UseCooldownReturn {
   const recordGlobalAction = (actionType: string) => {
     const now = Date.now();
     const newActions = [...globalActions, { actionType, timestamp: now }];
-    setGlobalActions(newActions);
-    saveGlobalActions(newActions);
+    
+    // Usar setTimeout para evitar setState durante render
+    setTimeout(() => {
+      setGlobalActions(newActions);
+      saveGlobalActions(newActions);
+    }, 10); // Aumentar delay para 10ms
   };
 
   // Obter cooldown específico para uma ação
@@ -251,8 +255,12 @@ export function useCooldown(): UseCooldownReturn {
     
     const newCooldowns = new Map(cooldowns);
     newCooldowns.set(taskId, newCooldown);
-    setCooldowns(newCooldowns);
-    saveCooldowns(newCooldowns);
+    
+    // Usar setTimeout para evitar setState durante render
+    setTimeout(() => {
+      setCooldowns(newCooldowns);
+      saveCooldowns(newCooldowns);
+    }, 10); // Aumentar delay para 10ms
   };
 
   // Obter motivo do bloqueio
@@ -290,8 +298,12 @@ export function useCooldown(): UseCooldownReturn {
   const resetCooldown = (taskId: string) => {
     const newCooldowns = new Map(cooldowns);
     newCooldowns.delete(taskId);
-    setCooldowns(newCooldowns);
-    saveCooldowns(newCooldowns);
+    
+    // Usar setTimeout para evitar setState durante render
+    setTimeout(() => {
+      setCooldowns(newCooldowns);
+      saveCooldowns(newCooldowns);
+    }, 10); // Aumentar delay para 10ms
   };
 
   return {

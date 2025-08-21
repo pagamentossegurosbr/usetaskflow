@@ -36,6 +36,7 @@ import { SyncStatus } from '@/components/SyncStatus';
 import { toast } from 'sonner';
 import { useAutoSync } from '@/hooks/useAutoSync';
 import { useAutoSyncMiddleware } from '@/lib/autoSyncMiddleware';
+import { useSubscription } from '@/hooks/useSubscription';
 
 export interface Todo {
   id: string;
@@ -82,6 +83,9 @@ export default function Home() {
   
   // Verificar banimento em tempo real
   useBanCheck();
+
+  // Sistema de subscription
+  const { subscription, refreshSubscription, loading: subscriptionLoading } = useSubscription();
 
   // Sistema de upgrade
   const {
@@ -333,36 +337,124 @@ export default function Home() {
     }
   }, [isClient]);
 
+  // Verificação periódica de consistência com o banco de dados
+  useEffect(() => {
+    if (!isClient || !session?.user?.id || status !== 'authenticated') return;
+
+    const checkConsistency = async () => {
+      try {
+        // Verificar se há tarefas no estado local
+        if (todos.length === 0) return;
+
+        // Buscar tarefas do banco para comparação
+        const timestamp = Date.now();
+        const response = await fetch(`/api/tasks?t=${timestamp}`, {
+          headers: {
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache'
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          const serverTasks = data.tasks || [];
+          
+          // Comparar IDs das tarefas completadas
+          const localCompletedIds = todos.filter(t => t.completed).map(t => t.id);
+          const serverCompletedIds = serverTasks
+            .filter((t: any) => t.completed || t.status === 'COMPLETED')
+            .map((t: any) => t.id.toString());
+
+          // Se há inconsistência, recarregar do servidor
+          const hasInconsistency = localCompletedIds.some((id: string) => !serverCompletedIds.includes(id)) ||
+                                  serverCompletedIds.some((id: string) => !localCompletedIds.includes(id));
+
+          if (hasInconsistency) {
+            console.log('🔄 Inconsistência detectada, recarregando tarefas do servidor...');
+            // Recarregar tarefas diretamente aqui para evitar dependência circular
+            const timestamp = Date.now();
+            const response = await fetch(`/api/tasks?t=${timestamp}`, {
+              headers: {
+                'Cache-Control': 'no-cache',
+                'Pragma': 'no-cache'
+              }
+            });
+            
+            if (response.ok) {
+              const data = await response.json();
+              const tasks = data.tasks || [];
+              const tasksWithDates = tasks
+                .filter((task: any) => task.id && task.id !== 'undefined' && task.id !== 'null')
+                .map((task: any) => ({
+                  id: task.id.toString(),
+                  text: task.text || task.title || '',
+                  completed: task.completed || task.status === 'COMPLETED' || false,
+                  createdAt: new Date(task.createdAt),
+                  completedAt: task.completedAt ? new Date(task.completedAt) : undefined,
+                  priority: task.priority === 'HIGH' || task.priority === true || false,
+                  scheduledFor: task.scheduledFor || task.dueDate ? new Date(task.scheduledFor || task.dueDate) : undefined,
+                }));
+              setTodos(tasksWithDates);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Erro na verificação de consistência:', error);
+      }
+    };
+
+    // Verificar consistência a cada 30 segundos
+    const interval = setInterval(checkConsistency, 30000);
+    
+    return () => clearInterval(interval);
+  }, [isClient, session?.user?.id, status, todos.length]);
+
   // Carregar tarefas da API
   const fetchTasks = async () => {
     if (status === 'loading' || !session?.user?.id) return;
     
     try {
-      const response = await fetch('/api/tasks');
+      // Adicionar timestamp para evitar cache
+      const timestamp = Date.now();
+      const response = await fetch(`/api/tasks?t=${timestamp}`, {
+        method: 'GET',
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      });
+      
       if (response.ok) {
         const data = await response.json();
         const tasks = data.tasks || []; // Garantir que tasks seja um array
-        const tasksWithDates = tasks
-          .filter((task: any) => task.id && task.id !== 'undefined' && task.id !== 'null') // Filtrar tarefas sem ID válido
-          .map((task: any) => ({
-            id: task.id.toString(),
-            text: task.text || '',
-            completed: task.completed || false,
-            createdAt: new Date(task.createdAt),
-            completedAt: task.completedAt ? new Date(task.completedAt) : undefined,
-            priority: task.priority || false,
-            scheduledFor: task.scheduledFor ? new Date(task.scheduledFor) : undefined,
-          }));
+        
+        // Carregar estado das tarefas concluídas do localStorage
+        const completedTasksState = JSON.parse(localStorage.getItem(getStorageKey('completed-tasks')) || '{}');
+        
+        // Processar dados das tarefas para garantir consistência
+        const processedTasks = data.tasks.map((task: any) => ({
+          id: task.id,
+          text: task.title || '', // Usar title como text
+          title: task.title || '',
+          completed: completedTasksState[task.id] || false, // Usar estado salvo do localStorage
+          priority: false, // Como não temos coluna priority, sempre false
+          createdAt: task.createdAt ? new Date(task.createdAt) : new Date(),
+          completedAt: completedTasksState[task.id] ? new Date() : undefined, // Se concluída, usar data atual
+        }));
         
         // Log para debug
-        if (tasks.length !== tasksWithDates.length) {
-          // Log removido para melhorar performance
+        if (tasks.length !== processedTasks.length) {
+          console.log(`Filtradas ${tasks.length - processedTasks.length} tarefas inválidas`);
         }
         
-        setTodos(tasksWithDates);
+        setTodos(processedTasks);
+      } else {
+        console.error('Erro ao carregar tarefas:', response.status);
+        toast.error('Erro ao carregar tarefas do servidor');
       }
     } catch (error) {
       console.error('Erro ao carregar tarefas:', error);
+      toast.error('Erro ao carregar tarefas. Verifique sua conexão.');
     }
   };
 
@@ -372,6 +464,28 @@ export default function Home() {
       fetchTasks();
     }
   }, [isClient, session?.user?.id, status]);
+
+  // Forçar sincronização quando a página é carregada
+  useEffect(() => {
+    if (isClient && session?.user?.id && status === 'authenticated') {
+      const forceSync = async () => {
+        try {
+          // Aguardar um pouco para garantir que tudo esteja carregado
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
+          // Forçar sincronização manual
+          await manualSync();
+          
+          // Recarregar tarefas para garantir consistência
+          await fetchTasks();
+        } catch (error) {
+          console.error('Erro na sincronização inicial:', error);
+        }
+      };
+      
+      forceSync();
+    }
+  }, [isClient, session?.user?.id, status, manualSync]);
 
   // Listener para modal de upgrade
   useEffect(() => {
@@ -435,7 +549,8 @@ export default function Home() {
         setTodos(prev => [newTask, ...prev]);
         
         // Sincronizar automaticamente após adicionar tarefa
-        await onTaskCreated(newTask);
+        // DESABILITAR TEMPORARIAMENTE PARA EVITAR CONFLITOS
+        // await onTaskCreated(newTask);
         
         toast.success('Tarefa criada com sucesso!');
       } else {
@@ -449,8 +564,6 @@ export default function Home() {
 
   const toggleTodo = async (id: string) => {
     try {
-      // Log removido para melhorar performance
-      
       if (!id || id === 'undefined' || id === 'null') {
         console.error('toggleTodo - ID inválido:', id);
         toast.error('ID da tarefa inválido');
@@ -463,41 +576,77 @@ export default function Home() {
         return;
       }
 
+      const newCompletedState = !todo.completed;
       const requestBody = {
         id: id.toString(),
-        completed: !todo.completed,
-        completedAt: !todo.completed ? new Date().toISOString() : null
+        completed: newCompletedState,
+        completedAt: newCompletedState ? new Date().toISOString() : null
       };
+
+      // Tentar atualizar no banco de dados com retry
+      let response;
+      let retryCount = 0;
+      const maxRetries = 3;
       
-              // Logs removidos para melhorar performance
+      while (retryCount < maxRetries) {
+        try {
+          response = await fetch('/api/tasks', {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(requestBody),
+          });
 
-      const response = await fetch('/api/tasks', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody),
-      });
+          if (response.ok) {
+            break; // Sucesso, sair do loop
+          }
+          
+          retryCount++;
+          if (retryCount < maxRetries) {
+            console.log(`Tentativa ${retryCount} falhou, tentando novamente...`);
+            await new Promise(resolve => setTimeout(resolve, 1000 * retryCount)); // Delay exponencial
+          }
+        } catch (error) {
+          retryCount++;
+          if (retryCount < maxRetries) {
+            console.log(`Erro na tentativa ${retryCount}, tentando novamente...`);
+            await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+          } else {
+            throw error;
+          }
+        }
+      }
 
-      if (response.ok) {
+      if (response && response.ok) {
         const responseData = await response.json();
         const updatedTask = responseData.task || responseData;
-        // Log removido para melhorar performance
         
-        // Atualizar estado local imediatamente para fluidez
+        // Atualizar estado local apenas após sucesso no banco
         setTodos(prev => prev.map(t => t.id === id ? {
           ...t,
-          completed: !t.completed,
-          completedAt: !t.completed ? new Date() : undefined
+          completed: newCompletedState,
+          completedAt: newCompletedState ? new Date() : undefined
         } : t));
         
+        // Salvar estado das tarefas concluídas no localStorage
+        const completedTasksState = JSON.parse(localStorage.getItem(getStorageKey('completed-tasks')) || '{}');
+        if (newCompletedState) {
+          completedTasksState[id] = true;
+        } else {
+          delete completedTasksState[id];
+        }
+        localStorage.setItem(getStorageKey('completed-tasks'), JSON.stringify(completedTasksState));
+        
         // Sincronizar automaticamente após atualizar tarefa
-        if (!todo.completed) {
+        // DESABILITAR TEMPORARIAMENTE PARA EVITAR CONFLITOS
+        /*
+        if (newCompletedState) {
           await onTaskCompleted(updatedTask);
           // Chamar completeTask para atualizar estatísticas de produtividade
           completeTask({
             id: updatedTask.id,
-            text: updatedTask.text,
+            text: updatedTask.title, // Usar title como text
             completed: true,
             createdAt: new Date(updatedTask.createdAt),
             completedAt: new Date(),
@@ -506,16 +655,37 @@ export default function Home() {
         } else {
           await onTaskUpdated(updatedTask);
         }
+        */
         
-        toast.success(todo.completed ? 'Tarefa reaberta!' : 'Tarefa concluída!');
+        toast.success(newCompletedState ? 'Tarefa concluída!' : 'Tarefa reaberta!');
       } else {
-        const errorData = await response.json().catch(() => ({}));
-        console.error('toggleTodo - Erro na resposta:', response.status, errorData);
-        toast.error('Erro ao atualizar tarefa');
+        // Se todas as tentativas falharam, usar localStorage como fallback
+        console.warn('toggleTodo - API falhou, usando localStorage como fallback');
+        
+        // Atualizar estado local
+        setTodos(prev => prev.map(t => t.id === id ? {
+          ...t,
+          completed: newCompletedState,
+          completedAt: newCompletedState ? new Date() : undefined
+        } : t));
+        
+        // Salvar estado das tarefas concluídas no localStorage
+        const completedTasksState = JSON.parse(localStorage.getItem(getStorageKey('completed-tasks')) || '{}');
+        if (newCompletedState) {
+          completedTasksState[id] = true;
+        } else {
+          delete completedTasksState[id];
+        }
+        localStorage.setItem(getStorageKey('completed-tasks'), JSON.stringify(completedTasksState));
+        
+        toast.success(newCompletedState ? 'Tarefa concluída! (salvo localmente)' : 'Tarefa reaberta! (salvo localmente)');
       }
     } catch (error) {
       console.error('Erro ao atualizar tarefa:', error);
-      toast.error('Erro ao atualizar tarefa');
+      toast.error('Erro ao atualizar tarefa. Tente novamente.');
+      
+      // Recarregar tarefas do banco para garantir consistência
+      await fetchTasks();
     }
   };
 
@@ -820,7 +990,10 @@ export default function Home() {
         // Abrir modal para adicionar tarefa
         const text = prompt('Digite o nome da tarefa:');
         if (text && text.trim()) {
-          addTodo(text.trim(), priority);
+          addTodo({
+            title: text.trim(),
+            priority: priority
+          });
         }
       }}
       onOpenFocusMode={openFocusMode}
@@ -1128,6 +1301,8 @@ export default function Home() {
 
 
 
+
+
               {/* Debug Anti-Farming (temporariamente desabilitado) */}
               {/* {showDebug && (
                 <AntiFarmingDebug isVisible={showDebug} />
@@ -1256,7 +1431,7 @@ export default function Home() {
             setUpgradeModalData(null);
           }}
           currentLevel={upgradeModalData.currentLevel}
-          targetPlan={upgradeModalData.plan as any}
+          targetPlan={upgradeModalData.plan as 'free' | 'aspirante' | 'executor' | undefined}
         />
       )}
 
@@ -1266,7 +1441,7 @@ export default function Home() {
         onClose={closeUpgradeModal}
         currentLevel={isLoaded ? stats?.currentLevel || 1 : 1}
         blockedFeature={blockedFeature}
-        targetPlan={targetPlan}
+        targetPlan={targetPlan ?? undefined}
       />
 
       {/* Modal de Estatísticas */}

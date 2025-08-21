@@ -69,11 +69,11 @@ interface User {
   name: string
   email: string
   role: string
+  subscriptionPlan?: string
   // Remover campos que não existem no schema ultra-minimal
   // isBanned: boolean
   // bannedAt: string | null
   // banReason: string | null
-  // subscriptionPlan: string
   // subscriptionStatus: string | null
   // level: number
   // stripeCustomerId: string | null
@@ -113,7 +113,7 @@ export default function AdminUsers() {
   const [selectedUser, setSelectedUser] = useState<User | null>(null)
   const [actionDialog, setActionDialog] = useState<{
     open: boolean
-    type: "changeRole" | "ban" | "unban" | "adjustXP" | "changePlan" | "changeLevel" | "delete" | "edit" | "editDateOfBirth" | null
+    type: "changeRole" | "ban" | "unban" | "delete" | "edit" | "changePlan" | null
     user: User | null
   }>({
     open: false,
@@ -122,13 +122,9 @@ export default function AdminUsers() {
   })
   const [actionData, setActionData] = useState({
     role: "",
-    banReason: "",
-    xpAdjustment: "",
-    newPlan: "",
-    newLevel: "",
     newName: "",
     newEmail: "",
-    newDateOfBirth: "",
+    newPlan: "",
   })
   const [userDetailsDialog, setUserDetailsDialog] = useState(false)
   const [editUserDialog, setEditUserDialog] = useState(false)
@@ -150,6 +146,7 @@ export default function AdminUsers() {
       })
 
       const response = await fetch(`/api/admin/users?${params}`)
+      
       if (response.ok) {
         const data: UsersResponse = await response.json()
         setUsers(data.users)
@@ -171,13 +168,11 @@ export default function AdminUsers() {
       let method = "PATCH"
       
       const payload = {
-        userId: actionDialog.user.id,
-        action: actionDialog.type,
+        id: actionDialog.user.id,
         ...(actionDialog.type === "changeRole" && { role: actionData.role }),
-        ...(actionDialog.type === "ban" && { reason: actionData.banReason }),
-        ...(actionDialog.type === "adjustXP" && { xp: parseInt(actionData.xpAdjustment) }),
-        ...(actionDialog.type === "changePlan" && { plan: actionData.newPlan }),
-        ...(actionDialog.type === "changeLevel" && { level: parseInt(actionData.newLevel) }),
+        ...(actionDialog.type === "ban" && { isBanned: true }),
+        ...(actionDialog.type === "unban" && { isBanned: false }),
+        ...(actionDialog.type === "changePlan" && { subscriptionPlan: actionData.newPlan }),
         ...(actionDialog.type === "edit" && { 
           name: actionData.newName, 
           email: actionData.newEmail 
@@ -186,33 +181,10 @@ export default function AdminUsers() {
 
       if (actionDialog.type === "delete") {
         method = "DELETE"
-        endpoint = `/api/admin/users?userId=${actionDialog.user.id}`
+        endpoint = `/api/admin/users?id=${actionDialog.user.id}`
       }
 
-      if (actionDialog.type === "editDateOfBirth") {
-        method = "PUT"
-        endpoint = `/api/admin/users/${actionDialog.user.id}/date-of-birth`
-        const dateOfBirthPayload = {
-          dateOfBirth: actionData.newDateOfBirth
-        }
-        const response = await fetch(endpoint, {
-          method,
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(dateOfBirthPayload),
-        })
 
-        if (response.ok) {
-          toast.success("Data de nascimento atualizada com sucesso")
-          fetchUsers()
-          setActionDialog({ open: false, type: null, user: null })
-          setActionData({ role: "", banReason: "", xpAdjustment: "", newPlan: "", newLevel: "", newName: "", newEmail: "", newDateOfBirth: "" })
-          return
-        } else {
-          const error = await response.json()
-          toast.error(error.error || "Erro ao atualizar data de nascimento")
-          return
-        }
-      }
       
       debug.log("Payload sendo enviado:", payload)
 
@@ -227,18 +199,19 @@ export default function AdminUsers() {
           changeRole: "Função alterada com sucesso",
           ban: "Usuário banido com sucesso",
           unban: "Usuário desbanido com sucesso",
-          adjustXP: "XP ajustado com sucesso",
           changePlan: "Plano alterado com sucesso",
-          changeLevel: "Nível alterado com sucesso",
           edit: "Usuário editado com sucesso",
-          editDateOfBirth: "Data de nascimento atualizada com sucesso",
           delete: "Usuário deletado com sucesso"
         }
         
         toast.success(successMessages[actionDialog.type] || "Ação executada com sucesso")
-        fetchUsers()
+        
+        // Forçar refresh dos dados para mostrar as mudanças
+        await fetchUsers()
+        
+        // Fechar diálogo e limpar dados
         setActionDialog({ open: false, type: null, user: null })
-        setActionData({ role: "", banReason: "", xpAdjustment: "", newPlan: "", newLevel: "", newName: "", newEmail: "" })
+        setActionData({ role: "", newName: "", newEmail: "", newPlan: "" })
       } else {
         const error = await response.json()
         toast.error(error.error || "Erro ao executar ação")
@@ -253,13 +226,9 @@ export default function AdminUsers() {
     setActionDialog({ open: true, type, user })
     setActionData({ 
       role: user.role, 
-      banReason: "", 
-      xpAdjustment: "",
-      newPlan: "",
-      newLevel: "",
       newName: user.name,
       newEmail: user.email,
-      newDateOfBirth: "" // Remover referência a dateOfBirth
+      newPlan: user.subscriptionPlan || "free"
     })
   }
 
@@ -439,7 +408,7 @@ export default function AdminUsers() {
                       <p className="text-sm text-muted-foreground">{user.email}</p>
                       <div className="flex items-center gap-2 mt-1">
                         {getRoleBadge(user.role as Role)}
-                        {/* {getPlanBadge(user.subscriptionPlan)} */}
+                        {user.subscriptionPlan && getPlanBadge(user.subscriptionPlan)}
                         {/* {getStatusBadge(user.subscriptionStatus)} */}
                       </div>
                        {/* <div className="flex items-center gap-2 mt-1">
@@ -485,10 +454,10 @@ export default function AdminUsers() {
                         
                         <DropdownMenuSeparator />
                         <DropdownMenuLabel>Plano & Progresso</DropdownMenuLabel>
-                        {/* <DropdownMenuItem onClick={() => openActionDialog("changePlan", user)}>
+                        <DropdownMenuItem onClick={() => openActionDialog("changePlan", user)}>
                           <CreditCard className="mr-2 h-4 w-4" />
                           Alterar Plano
-                        </DropdownMenuItem> */}
+                        </DropdownMenuItem>
                         {/* <DropdownMenuItem onClick={() => openActionDialog("changeLevel", user)}>
                           <TrendingUp className="mr-2 h-4 w-4" />
                           Alterar Nível
@@ -862,7 +831,7 @@ export default function AdminUsers() {
                 <CardContent className="space-y-3">
                   <div>
                     <Label className="text-sm font-medium text-muted-foreground">Plano Atual</Label>
-                    <div className="mt-1">{getPlanBadge("free")}</div>
+                    <div className="mt-1">{getPlanBadge(selectedUser.subscriptionPlan || "free")}</div>
                   </div>
                   {/* {selectedUser.subscriptionStatus && (
                     <div>

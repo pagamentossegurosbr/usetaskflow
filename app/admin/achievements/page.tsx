@@ -77,10 +77,16 @@ export default function AdminAchievements() {
       const response = await fetch("/api/admin/achievements")
       if (response.ok) {
         const data = await response.json()
-        setAchievements(data)
+        // Verificar se data.achievements existe, senão usar data diretamente
+        setAchievements(data.achievements || data || [])
+      } else {
+        console.error("Erro na resposta da API:", response.status)
+        setAchievements([])
+        toast.error("Erro ao carregar conquistas")
       }
     } catch (error) {
       console.error("Erro ao buscar conquistas:", error)
+      setAchievements([])
       toast.error("Erro ao carregar conquistas")
     } finally {
       setLoading(false)

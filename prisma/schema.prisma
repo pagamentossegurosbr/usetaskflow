@@ -112,7 +112,6 @@ model User {
 model Task {
   id           String    @id @default(uuid())
   title        String
-  text         String
   completed    Boolean   @default(false)
   priority     Boolean   @default(false)
   userId       String    @map("user_id")

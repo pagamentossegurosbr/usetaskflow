@@ -26,7 +26,10 @@ class LocalStorageManager {
       };
       
       localStorage.setItem(this.STORAGE_KEY, JSON.stringify(updatedData));
-      console.log('💾 Dados salvos localmente:', Object.keys(data));
+      // Reduzir logs para evitar spam
+      if (process.env.NODE_ENV === 'development' && Math.random() < 0.1) {
+        console.log('💾 Dados salvos localmente:', Object.keys(data));
+      }
     } catch (error) {
       console.error('❌ Erro ao salvar dados localmente:', error);
     }
@@ -93,7 +96,10 @@ class LocalStorageManager {
       });
       
       localStorage.setItem(this.PENDING_CHANGES_KEY, JSON.stringify(pendingChanges));
-      console.log('📝 Mudança pendente adicionada:', change.type);
+      // Reduzir logs para evitar spam
+      if (process.env.NODE_ENV === 'development' && Math.random() < 0.2) {
+        console.log('📝 Mudança pendente adicionada:', change.type);
+      }
     } catch (error) {
       console.error('❌ Erro ao adicionar mudança pendente:', error);
     }
@@ -114,7 +120,10 @@ class LocalStorageManager {
   clearPendingChanges(): void {
     try {
       localStorage.removeItem(this.PENDING_CHANGES_KEY);
-      console.log('✅ Mudanças pendentes limpas');
+      // Reduzir logs para evitar spam
+      if (process.env.NODE_ENV === 'development' && Math.random() < 0.3) {
+        console.log('✅ Mudanças pendentes limpas');
+      }
     } catch (error) {
       console.error('❌ Erro ao limpar mudanças pendentes:', error);
     }

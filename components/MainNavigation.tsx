@@ -68,6 +68,7 @@ export function MainNavigation() {
   const { stats } = useProductivityLevel();
   const [currentDate, setCurrentDate] = useState('');
   const [isHydrated, setIsHydrated] = useState(false);
+  const [forceUpdate, setForceUpdate] = useState(0);
   
   // Sistema de upgrade
   const {
@@ -94,6 +95,25 @@ export function MainNavigation() {
   // Controlar hidratação para evitar mismatch
   useEffect(() => {
     setIsHydrated(true);
+  }, []);
+
+  // Escutar eventos de atualização de XP para atualizar o progresso em tempo real
+  useEffect(() => {
+    const handleXPUpdate = (event: CustomEvent) => {
+      // Forçar re-render do componente quando XP for atualizado
+      if (event.detail?.newStats) {
+        // Usar setTimeout para evitar setState durante render
+        setTimeout(() => {
+          setForceUpdate(prev => prev + 1);
+        }, 10); // Aumentar delay para 10ms
+      }
+    };
+
+    window.addEventListener('xp-updated', handleXPUpdate as EventListener);
+    
+    return () => {
+      window.removeEventListener('xp-updated', handleXPUpdate as EventListener);
+    };
   }, []);
 
   // Atualizar data atual
@@ -174,7 +194,7 @@ export function MainNavigation() {
   const progressPercentage = useMemo(() => {
     if (!isHydrated || !stats.xpToNextLevel || stats.xpToNextLevel <= 0) return 0;
     return (stats.xpInCurrentLevel / (stats.xpInCurrentLevel + stats.xpToNextLevel)) * 100;
-  }, [isHydrated, stats.xpInCurrentLevel, stats.xpToNextLevel]);
+  }, [isHydrated, stats.xpInCurrentLevel, stats.xpToNextLevel, forceUpdate]);
 
   // Não mostrar navegação na landing page, auth pages, ou admin pages
   if (!shouldShowNavigation) {

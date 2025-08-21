@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { authOptionsFixed } from '@/lib/auth-fixed';
 import { prisma } from '@/lib/prisma';
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getServerSession(authOptionsFixed);
 
     if (!session || session.user?.role !== 'OWNER') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -34,10 +34,10 @@ export async function GET(request: NextRequest) {
           name: true,
           email: true,
           role: true,
+          subscriptionPlan: true,
           // Remover campos que não existem no schema ultra-minimal
           // createdAt: true,
           // lastLoginAt: true,
-          // subscriptionPlan: true,
           // _count: {
           //   select: {
           //     tasks: true,
@@ -76,7 +76,7 @@ export async function GET(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getServerSession(authOptionsFixed);
 
     if (!session || session.user?.role !== 'OWNER') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -119,9 +119,59 @@ export async function PUT(request: NextRequest) {
   }
 }
 
+export async function PATCH(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptionsFixed);
+
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized - No session' }, { status: 401 });
+    }
+
+    if (session.user?.role !== 'OWNER') {
+      return NextResponse.json({ error: 'Unauthorized - Not OWNER' }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const { id, role, isBanned, subscriptionPlan } = body;
+
+    if (!id) {
+      return NextResponse.json(
+        { error: 'ID é obrigatório' },
+        { status: 400 }
+      );
+    }
+
+    const updateData: any = {};
+    if (role !== undefined) updateData.role = role;
+    if (isBanned !== undefined) updateData.isBanned = isBanned;
+    if (subscriptionPlan !== undefined) updateData.subscriptionPlan = subscriptionPlan;
+
+    const user = await prisma.user.update({
+      where: { id },
+      data: updateData,
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        isBanned: true,
+        subscriptionPlan: true
+      }
+    });
+
+    return NextResponse.json(user);
+  } catch (error) {
+    console.error('Erro ao atualizar usuário:', error);
+    return NextResponse.json(
+      { error: 'Erro interno do servidor' },
+      { status: 500 }
+    );
+  }
+}
+
 export async function DELETE(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getServerSession(authOptionsFixed);
 
     if (!session || session.user?.role !== 'OWNER') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

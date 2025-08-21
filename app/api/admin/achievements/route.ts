@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { prisma } from '@/lib/prisma';
 
 export async function GET(request: NextRequest) {
   try {
@@ -9,16 +10,21 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
     }
 
-    // Retornar array vazio (tabela achievements não existe no schema ultra-minimal)
-    return NextResponse.json({
-      achievements: [],
-      pagination: {
-        page: 1,
-        limit: 20,
-        total: 0,
-        pages: 0,
+    // Buscar conquistas do banco de dados
+    const achievements = await prisma.achievement.findMany({
+      include: {
+        _count: {
+          select: {
+            userAchievements: true
+          }
+        }
+      },
+      orderBy: {
+        createdAt: 'desc'
       }
     });
+
+    return NextResponse.json(achievements);
 
   } catch (error) {
     console.error('Erro ao buscar conquistas:', error);
@@ -36,11 +42,27 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
     }
 
-    // Retornar erro (tabela achievements não existe no schema ultra-minimal)
-    return NextResponse.json(
-      { error: 'Funcionalidade de conquistas não disponível no schema atual' },
-      { status: 501 }
-    );
+    const body = await request.json();
+    const { name, description, icon, xpReward, requirement } = body;
+
+    if (!name || !description || !xpReward) {
+      return NextResponse.json(
+        { error: 'Nome, descrição e XP são obrigatórios' },
+        { status: 400 }
+      );
+    }
+
+    const achievement = await prisma.achievement.create({
+      data: {
+        name,
+        description,
+        icon: icon || 'trophy',
+        xpReward: parseInt(xpReward),
+        requirement: requirement || { type: 'tasks_completed', value: 1 }
+      }
+    });
+
+    return NextResponse.json(achievement);
 
   } catch (error) {
     console.error('Erro ao criar conquista:', error);

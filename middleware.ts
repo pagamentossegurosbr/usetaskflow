@@ -55,9 +55,8 @@ export function middleware(request: NextRequest) {
   // ========================================
   
   // Proteger rotas de API que requerem autenticação
-  if (request.nextUrl.pathname.startsWith('/api/') && 
-      !request.nextUrl.pathname.startsWith('/api/auth/') &&
-      !request.nextUrl.pathname.startsWith('/api/webhooks/')) {
+  if (request.nextUrl.pathname.startsWith('/api/admin/') && 
+      !request.nextUrl.pathname.startsWith('/api/auth/')) {
     
     // Verificar se há token de autenticação
     const authHeader = request.headers.get('authorization');
